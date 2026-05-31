@@ -1,5 +1,6 @@
 # churn-prediction-mvp
 **Проект - Regression (Регрессия)**
+
 **Цель анализа:**
 Вероятность оттока (Logistic Regression)
 
@@ -43,5 +44,4 @@ churn-prediction-mvp/
     .env.example - Шаблон для Git (без паролей)
     .gitignore - Игнорировать секреты
     README.md - Инструкция для команды
-    architecture.md - Описание архитектуры
     SECURITY.md - Инструкция по безопасности

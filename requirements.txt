@@ -2,4 +2,4 @@
 psycopg2-binary==2.9.9 # Для работы с PostgreSQL
 elasticsearch==8.11.0 # Для работы с Elasticsearch
 python-dotenv==1.0.0 # Для чтения .env файла
-pandas==2.1.0 # Для работы с данными
+pandas==2.1.4 # Для работы с данными

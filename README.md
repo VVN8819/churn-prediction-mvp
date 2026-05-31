@@ -1,4 +1,20 @@
 # churn-prediction-mvp
+**Проект - Regression (Регрессия)**
+**Цель анализа:**
+Вероятность оттока (Logistic Regression)
+
+**На выходе результат:**
+"Вероятность ухода клиента N: 73% в ближайшие 14 дней"
+
+**Использование результата:**
+Проактивная оценка, триггерные push-уведомления для реактивации клиента на платформе по доставке еды SaaS.
+
+**Объект работы:**
+Сложное поведение гостей
+
+**Что есть на начальном этапе:**
+- CDP Elasticsearch - собирает события от сайта и приложения по JS трекеру (15 событий выбрал: page-view, profile-traits-update, identification, product-details-page-view, cart-changes, checkout-started, cart-delete, sign-in, profile-update, promotion-viewed, promotion-clicked,promotion-close, message-status, message-opened, rating).
+- Платформа по рассылкам - пуш в приложении, Мах, Телега, Баннеры в приложении и сайте.
 
 # Структура
 

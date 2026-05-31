@@ -3,6 +3,7 @@
 # Структура
 
 churn-prediction-mvp/
+
     01_data_collection/ - Шаг 1: Сбор сырых данных
         fetch_from_cdp.py - Скрипт: получение данных из CDP
         process_queue.py - Скрипт: обработка очереди

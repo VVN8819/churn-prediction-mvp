@@ -1,24 +1,42 @@
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 
 # PostgreSQL
 PG_CONFIG = {
-    "host": os.getenv('PG_HOST', ''),
-    "port": os.getenv('PG_PORT', ''),
-    "database": os.getenv('PG_DATABASE', 'churn_db'),
-    "user": os.getenv('PG_USER', 'churn_user'),
-    "password": os.getenv('PG_PASSWORD')
+    "host": os.getenv('PG_HOST'),
+    "port": os.getenv('PG_PORT', '5432'),
+    "database": os.getenv('PG_DATABASE'),
+    "user": os.getenv('PG_USER'),
+    "password": os.getenv('PG_PASSWORD'),
+    
+    # SSL для облачного подключения
+    "sslmode": os.getenv('PG_SSL_MODE', 'require')
 }
 
+# Обработка пути к SSL сертификату
+ssl_root_cert = os.getenv('PG_SSL_ROOT_CERT')
+if ssl_root_cert and PG_CONFIG['sslmode'] in ('verify-ca', 'verify-full'):
+    # Нормализуем путь для кросс-платформенности
+    cert_path = Path(ssl_root_cert).resolve()
+    if not cert_path.exists():
+        raise FileNotFoundError(
+            f"SSL сертификат не найден: {cert_path}\n"
+            f"Проверьте путь в .env: PG_SSL_ROOT_CERT"
+        )
+    PG_CONFIG["sslrootcert"] = str(cert_path)
+
 # проверка пароля
-if not PG_CONFIG["password"]:
-    raise ValueError(
-        "PG_PASSWORD не настроен!\n"
-        "1. Скопируйте .env.example в .env\n"
-        "2. Заполните PG_PASSWORD=ваш_пароль\n"
-        "3. Перезапустите приложение"
+required_fields = ["host", "database", "user", "password"]
+for field in required_fields:
+    if not PG_CONFIG["password"]:
+        raise ValueError(
+            "PG_PASSWORD не настроен!\n"
+            "1. Скопируйте .env.example в .env\n"
+            "2. Заполните PG_PASSWORD=ваш_пароль\n"
+            "3. Перезапустите приложение"
     )
 
 # CDP Elasticsearch
@@ -41,6 +59,7 @@ if not ES_CONFIG["basic_auth"][1]:
 # сколько событий брать за раз
 BATCH_SIZE=int(os.getenv('BATCH_SIZE', '1000'))
 FETCH_HOURS=int(os.getenv('FETCH_HOURS', '24'))
+ES_INDEX_PATTERN = os.getenv('ES_INDEX_PATTERN', 'events-*')
 
 # 15 событий
 EVENT_TYPES = [

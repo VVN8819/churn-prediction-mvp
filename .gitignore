@@ -39,3 +39,6 @@ logs/
 tmp/
 temp/
 *.tmp
+
+# Тестовые подключения
+01_data_collection/04_test_pg_connection.py

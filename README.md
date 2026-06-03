@@ -22,9 +22,10 @@
 churn-prediction-mvp/
 
     01_data_collection/ - Шаг 1: Сбор сырых данных
-        fetch_from_cdp.py - Скрипт: получение данных из CDP
-        process_queue.py - Скрипт: обработка очереди
-        config.py - Настройки (подключения к БД)
+        01_fetch_from_cdp.py - Скрипт: получение данных из CDP
+        02_process_queue.py - Скрипт: обработка очереди
+        03_config.py - Настройки (подключения к БД)
+        04_test_pg_connection.py - Проверочное подключение к базе
     
     02_database/ - Шаг 2: База данных
         create_tables.sql - Создание таблиц

@@ -15,14 +15,8 @@ CREATE TABLE IF NOT EXISTS events_queue (
     status VARCHAR(16) DEFAULT 'pending',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     processed_at TIMESTAMPTZ,
-    error_message TEXT,
-    
-    -- Индексы для быстрого поиска
-    INDEX idx_queue_status (status),
-    INDEX idx_queue_event_type (event_type),
-    INDEX idx_queue_event_id (event_id)  -- не дублировать события
+    error_message TEXT
 );
-
 COMMENT ON TABLE events_queue IS 'Временная очередь для событий из CDP Elasticsearch';
 
 -- ==================================================
@@ -37,12 +31,8 @@ CREATE TABLE IF NOT EXISTS raw_events (
     profile_id UUID,
     session_id UUID,
     event_data JSONB NOT NULL,
-    inserted_at TIMESTAMPTZ DEFAULT NOW(),
-    
-    -- Индексы будут добавлены отдельно
-    -- Партиции будут добавлены отдельно
+    inserted_at TIMESTAMPTZ DEFAULT NOW()
 ) PARTITION BY RANGE (inserted_at);
-
 COMMENT ON TABLE raw_events IS 'Основное хранилище сырых событий, партиционировано по месяцам';
 
 -- =================================================
@@ -59,16 +49,44 @@ CREATE TABLE IF NOT EXISTS profiles (
     total_orders INTEGER DEFAULT 0,
     total_spent NUMERIC(12,2) DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    
-    -- Индекс для быстрого поиска по телефону (для связи с отзывами)
-    INDEX idx_profiles_phone (phone)
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-
 COMMENT ON TABLE profiles IS 'Справочник пользователей для расчёта признаков';
 
+-- =============================
+-- ТАБЛИЦА 4: Feature Store (18 признаков)
+
+CREATE TABLE IF NOT EXISTS ml_features (
+    profile_id UUID PRIMARY KEY,
+    snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    days_since_last_order INTEGER,
+    checkout_value_trend NUMERIC(10,4),
+    cart_abandonment_rate_30d NUMERIC(5,4),
+    cart_browse_abandon_rate_30d NUMERIC(5,4),
+    checkout_frustration_index NUMERIC(5,4),
+    auth_on_checkout_flag BOOLEAN,
+    coupon_dependency_ratio NUMERIC(5,4),
+    session_engagement_score NUMERIC(5,4),
+    delta_page_views_14d NUMERIC(7,4),
+    promo_ignore_rate_14d NUMERIC(5,4),
+    message_open_rate_30d NUMERIC(5,4),
+    push_channel_available BOOLEAN,
+    phone_changed_90d BOOLEAN,
+    profile_completeness_score NUMERIC(5,4),
+    avg_rating_90d NUMERIC(3,2),
+    has_unpublished_review BOOLEAN,
+    avg_cart_value_30d NUMERIC(10,2),
+    cart_to_checkout_ratio NUMERIC(5,2),
+    churn_probability NUMERIC(5,4),
+    risk_level VARCHAR(16),
+    computed_at TIMESTAMPTZ DEFAULT NOW(),
+    model_version VARCHAR(16) DEFAULT 'v1.0'
+);
+COMMENT ON TABLE ml_features IS 'Feature Store: 18 признаков + предсказание оттока';
+
+
 -- ====================================
--- ТАБЛИЦА 4: events_processing_log (лог обработки)
+-- ТАБЛИЦА 5: events_processing_log (лог обработки)
 -- Помогает мониторить.
 
 CREATE TABLE IF NOT EXISTS events_processing_log (
@@ -81,11 +99,7 @@ CREATE TABLE IF NOT EXISTS events_processing_log (
     started_at TIMESTAMPTZ DEFAULT NOW(),
     completed_at TIMESTAMPTZ,
     status VARCHAR(16) DEFAULT 'running',
-    error_message TEXT,
-    
-    INDEX idx_log_batch (batch_id),
-    INDEX idx_log_status (status),
-    INDEX idx_log_time (started_at)
+    error_message TEXT
 );
 
 COMMENT ON TABLE events_processing_log IS 'Лог обработки батчей из CDP';

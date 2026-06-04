@@ -12,8 +12,8 @@ CREATE INDEX IF NOT EXISTS idx_raw_profile_time ON raw_events (profile_id, inser
 CREATE INDEX IF NOT EXISTS idx_raw_type_time ON raw_events (event_type, inserted_at DESC);
 CREATE INDEX IF NOT EXISTS idx_raw_type_profile_time ON raw_events (event_type, profile_id, inserted_at DESC) WHERE profile_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_raw_event_data_gin ON raw_events USING GIN (event_data);
-CREATE INDEX IF NOT EXISTS idx_raw_rating ON raw_events ((event_data->'event'->'properties'->>'rate')::INTEGER) WHERE event_type = 'rating' AND event_data->'event'->'properties'->>'rate' IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_raw_cart_total ON raw_events ((event_data->'event'->'properties'->>'total')::NUMERIC) WHERE event_type = 'cart-changes' AND event_data->'event'->'properties'->>'total' IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_raw_rating ON raw_events (CAST(event_data->'event'->'properties'->>'rate' AS INTEGER)) WHERE event_type = 'rating' AND event_data->'event'->'properties'->>'rate' IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_raw_cart_total ON raw_events (CAST(event_data->'event'->'properties'->>'total' AS NUMERIC)) WHERE event_type = 'cart-changes' AND event_data->'event'->'properties'->>'total' IS NOT NULL;
 
 -- profiles
 CREATE INDEX IF NOT EXISTS idx_profiles_phone ON profiles (phone);

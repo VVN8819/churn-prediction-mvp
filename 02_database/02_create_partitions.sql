@@ -1,6 +1,5 @@
 -- 02_create_partitions.sql
 -- Партиционирование raw_events по месяцам
--- Для производительности на Timeweb Cloud
 
 CREATE OR REPLACE FUNCTION create_monthly_partition(
     table_name TEXT,
@@ -27,7 +26,7 @@ BEGIN
         end_date
     );
     
-    RAISE NOTICE 'Создана партиция: % (% → %)', partition_name, start_date, end_date;
+    RAISE NOTICE 'Создана партиция: % (% на %)', partition_name, start_date, end_date;
 END;
 $$ LANGUAGE plpgsql;
 

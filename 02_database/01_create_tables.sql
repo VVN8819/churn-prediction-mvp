@@ -25,7 +25,7 @@ COMMENT ON TABLE events_queue IS 'Временная очередь для со�
 
 -- Создаём основную (родительскую) таблицу
 CREATE TABLE IF NOT EXISTS raw_events (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID DEFAULT gen_random_uuid(),
     event_id UUID NOT NULL,
     event_type VARCHAR(64) NOT NULL,
     profile_id UUID,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 COMMENT ON TABLE profiles IS 'Справочник пользователей для расчёта признаков';
 
 -- =============================
--- ТАБЛИЦА 4: Feature Store (18 признаков)
+-- ТАБЛИЦА 4: ml_features (18 признаков)
 
 CREATE TABLE IF NOT EXISTS ml_features (
     profile_id UUID PRIMARY KEY,

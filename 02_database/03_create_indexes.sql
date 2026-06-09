@@ -17,6 +17,7 @@ CREATE INDEX IF NOT EXISTS idx_raw_cart_total ON raw_events (CAST(event_data->'e
 
 -- profiles
 CREATE INDEX IF NOT EXISTS idx_profiles_phone ON profiles (phone);
+CREATE INDEX IF NOT EXISTS idx_profiles_updated ON profiles (updated_at);
 
 -- ml_features
 CREATE INDEX IF NOT EXISTS idx_features_risk ON ml_features (risk_level);

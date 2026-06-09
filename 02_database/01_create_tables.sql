@@ -45,11 +45,9 @@ CREATE TABLE IF NOT EXISTS profiles (
     phone VARCHAR(20),
     firstname VARCHAR(128),
     birthday DATE,
-    last_purchase TIMESTAMPTZ,
-    total_orders INTEGER DEFAULT 0,
-    total_spent NUMERIC(12,2) DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    last_seen TIMESTAMPTZ
 );
 COMMENT ON TABLE profiles IS 'Справочник пользователей для расчёта признаков';
 

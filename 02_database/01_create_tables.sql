@@ -5,6 +5,9 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- Временная очередь для новых событий из CDP
 -- Забирает из CDP - кладёт сюда - другой скрипт забирает отсюда
 
+-- Удалить старую таблицу events_queue
+-- DROP TABLE IF EXISTS events_queue CASCADE;
+
 CREATE TABLE IF NOT EXISTS events_queue (
     id BIGSERIAL PRIMARY KEY,
     event_id UUID NOT NULL,
@@ -23,6 +26,9 @@ COMMENT ON TABLE events_queue IS 'Временная очередь для со�
 -- ТАБЛИЦА 2: raw_events (с партиционированием)
 -- Хранятся все события для последующего расчёта признаков и производительности
 
+-- Удалить старую таблицу raw_events
+-- DROP TABLE IF EXISTS raw_events CASCADE;
+
 -- Создаём основную (родительскую) таблицу
 CREATE TABLE IF NOT EXISTS raw_events (
     id UUID DEFAULT gen_random_uuid(),
@@ -40,6 +46,9 @@ COMMENT ON TABLE raw_events IS 'Основное хранилище сырых �
 -- Хранить агрегированную информацию о пользователях
 -- Заполняется из событий identification, profile-update
 
+-- Удалить старую таблицу profiles
+-- DROP TABLE IF EXISTS profiles CASCADE;
+
 CREATE TABLE IF NOT EXISTS profiles (
     profile_id UUID PRIMARY KEY,
     phone VARCHAR(20),
@@ -53,6 +62,9 @@ COMMENT ON TABLE profiles IS 'Справочник пользователей д
 
 -- =============================
 -- ТАБЛИЦА 4: ml_features (18 признаков)
+
+-- Удалить старую таблицу ml_features
+-- DROP TABLE IF EXISTS ml_features CASCADE;
 
 CREATE TABLE IF NOT EXISTS ml_features (
     profile_id UUID PRIMARY KEY,
@@ -86,6 +98,9 @@ COMMENT ON TABLE ml_features IS 'Feature Store: 18 признаков + пред
 -- ====================================
 -- ТАБЛИЦА 5: events_processing_log (лог обработки)
 -- Помогает мониторить.
+
+-- Удалить старую таблицу events_processing_log
+-- DROP TABLE IF EXISTS events_processing_log CASCADE;
 
 CREATE TABLE IF NOT EXISTS events_processing_log (
     id BIGSERIAL PRIMARY KEY,

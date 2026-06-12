@@ -112,7 +112,6 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
  NOW() - INTERVAL '0 days');
 
 -- ======== Персональные предложения, чтение отзывов, push, сообщения ===========
-INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
 -- personal-view в /profile
 ('a1b2c3d4-0001-4000-8000-000000000009', 'personal-view',
  'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
@@ -210,7 +209,6 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
  NOW() - INTERVAL '95 days');
 
  -- ======== Неактивный: push есть, но сообщения не открывает ===========
-INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
 -- profile-traits-update с push_id (95 дней назад)
 ('b2c3d4e5-0002-4000-8000-000000000004', 'profile-traits-update',
  '8a2edca4-5129-412a-8395-7a7a54b4f1a8', '22222222-2222-2222-2222-222222222222',
@@ -287,6 +285,55 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "metadata": {"time": {"insert": "2026-05-22T10:00:00Z"}}}}'::JSONB,
  NOW() - INTERVAL '19 days');
 
+ -- ======== Рисковый: Персональные предложения игнорирует, читает отзывы, обновляет профиль ===========
+-- personal-view в /profile (НО НЕ копирует промокод)
+('c3d4e5f6-0003-4000-8000-000000000006', 'personal-view',
+ 'd64347d4-8145-4161-8cb4-affc276ed890', '33333333-3333-3333-3333-333333333333',
+ '{"event": {"id": "c3d4e5f6-0003-4000-8000-000000000006", "type": "personal-view",
+   "properties": {"id": "777ea088-4074-43a7-a7b9-d53b48d8ab4d"},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/profile", "path": "/profile", "title": "Личный кабинет"}},
+   "profile": {"id": "d64347d4-8145-4161-8cb4-affc276ed890"},
+   "session": {"id": "33333333-3333-3333-3333-333333333333"},
+   "metadata": {"time": {"insert": "2026-05-21T15:03:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '20 days'),
+
+-- page-view /reviews (читает отзывы)
+('c3d4e5f6-0003-4000-8000-000000000007', 'page-view',
+ 'd64347d4-8145-4161-8cb4-affc276ed890', '33333333-3333-3333-3333-333333333333',
+ '{"event": {"id": "c3d4e5f6-0003-4000-8000-000000000007", "type": "page-view",
+   "properties": {"is_authenticated": true},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/reviews", "path": "/reviews", "title": "Отзывы"}},
+   "profile": {"id": "d64347d4-8145-4161-8cb4-affc276ed890"},
+   "session": {"id": "33333333-3333-3333-3333-333333333333"},
+   "metadata": {"time": {"insert": "2026-05-21T14:50:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '20 days'),
+
+ -- profile-update с birthday
+('c3d4e5f6-0003-4000-8000-000000000008', 'profile-update',
+ 'd64347d4-8145-4161-8cb4-affc276ed890', '33333333-3333-3333-3333-333333333333',
+ '{"event": {"id": "c3d4e5f6-0003-4000-8000-000000000008", "type": "profile-update",
+   "properties": {
+     "pii": {"firstname": "Petr", "birthday": "1990-11-30T00:00:00.000Z"},
+     "contact": {"phone": {"main": "79000000003"}}
+   },
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/profile", "path": "/profile", "title": "Редактирование профиля"}},
+   "profile": {"id": "d64347d4-8145-4161-8cb4-affc276ed890"},
+   "session": {"id": "33333333-3333-3333-3333-333333333333"},
+   "metadata": {"time": {"insert": "2026-05-20T10:00:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '21 days'),
+
+-- sign-in
+('c3d4e5f6-0003-4000-8000-000000000009', 'sign-in',
+ 'd64347d4-8145-4161-8cb4-affc276ed890', '33333333-3333-3333-3333-333333333333',
+ '{"event": {"id": "c3d4e5f6-0003-4000-8000-000000000009", "type": "sign-in",
+   "properties": {"phone": {"main": "79000000003"}},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/login", "path": "/login", "title": "Вход"}},
+   "profile": {"id": "d64347d4-8145-4161-8cb4-affc276ed890"},
+   "session": {"id": "33333333-3333-3333-3333-333333333333"},
+   "metadata": {"time": {"insert": "2026-05-21T14:45:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '20 days');
+
+
  -- ======== 4. Охотник за скидками (использует купоны) ===========
 INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
 -- Просмотр страницы акций
@@ -350,6 +397,7 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "session": {"id": "44444444-4444-4444-4444-444444444444"},
    "metadata": {"time": {"insert": "2026-06-05T12:05:30Z"}}}}'::JSONB,
  NOW() - INTERVAL '5 days');
+
 
  -- ======== 5. Новый клиент (недавно зарегистрировался) ===========
 INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES

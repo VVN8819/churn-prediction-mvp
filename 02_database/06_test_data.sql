@@ -111,6 +111,72 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "metadata": {"time": {"insert": "2026-06-08T10:00:00Z"}}}}'::JSONB,
  NOW() - INTERVAL '0 days');
 
+-- ======== Персональные предложения, чтение отзывов, push, сообщения ===========
+INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
+-- personal-view в /profile
+('a1b2c3d4-0001-4000-8000-000000000009', 'personal-view',
+ 'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
+ '{"event": {"id": "a1b2c3d4-0001-4000-8000-000000000009", "type": "personal-view",
+   "properties": {"id": "941ea088-4074-43a7-a7b9-d53b48d8ab4c"},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/profile", "path": "/profile", "title": "Личный кабинет"}},
+   "profile": {"id": "e9922810-0a85-43c1-8e78-be8343c1f8ed"},
+   "session": {"id": "11111111-1111-1111-1111-111111111111"},
+   "metadata": {"time": {"insert": "2026-06-07T10:06:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '1 day'),
+
+-- copy-promocode через 30 секунд
+('a1b2c3d4-0001-4000-8000-000000000010', 'copy-promocode',
+ 'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
+ '{"event": {"id": "a1b2c3d4-0001-4000-8000-000000000010", "type": "copy-promocode",
+   "properties": {"id": "941ea088-4074-43a7-a7b9-d53b48d8ab4c"},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/profile", "path": "/profile", "title": "Личный кабинет"}},
+   "profile": {"id": "e9922810-0a85-43c1-8e78-be8343c1f8ed"},
+   "session": {"id": "11111111-1111-1111-1111-111111111111"},
+   "metadata": {"time": {"insert": "2026-06-07T10:06:30Z"}}}}'::JSONB,
+ NOW() - INTERVAL '1 day'),
+
+-- page-view /reviews (читает отзывы)
+('a1b2c3d4-0001-4000-8000-000000000011', 'page-view',
+ 'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
+ '{"event": {"id": "a1b2c3d4-0001-4000-8000-000000000011", "type": "page-view",
+   "properties": {"is_authenticated": true},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/reviews", "path": "/reviews", "title": "Отзывы"}},
+   "profile": {"id": "e9922810-0a85-43c1-8e78-be8343c1f8ed"},
+   "session": {"id": "11111111-1111-1111-1111-111111111111"},
+   "metadata": {"time": {"insert": "2026-06-07T09:55:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '1 day'),
+
+-- profile-traits-update с push_id (push_channel_available = true)
+('a1b2c3d4-0001-4000-8000-000000000012', 'profile-traits-update',
+ 'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
+ '{"event": {"id": "a1b2c3d4-0001-4000-8000-000000000012", "type": "profile-traits-update",
+   "properties": {"push_id": "fcm_token_12345_abcde"},
+   "profile": {"id": "e9922810-0a85-43c1-8e78-be8343c1f8ed"},
+   "session": {"id": "11111111-1111-1111-1111-111111111111"},
+   "metadata": {"time": {"insert": "2026-06-01T10:00:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '7 days'),
+
+-- message-status: delivered
+('a1b2c3d4-0001-4000-8000-000000000013', 'message-status',
+ 'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
+ '{"event": {"id": "a1b2c3d4-0001-4000-8000-000000000013", "type": "message-status",
+   "properties": {"conversation": "conv-001", "type": "push", "status": "delivered"},
+   "profile": {"id": "e9922810-0a85-43c1-8e78-be8343c1f8ed"},
+   "session": {"id": "11111111-1111-1111-1111-111111111111"},
+   "metadata": {"time": {"insert": "2026-06-06T12:00:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '2 days'),
+
+-- message-opened (открыл сообщение)
+('a1b2c3d4-0001-4000-8000-000000000014', 'message-opened',
+ 'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
+ '{"event": {"id": "a1b2c3d4-0001-4000-8000-000000000014", "type": "message-opened",
+   "properties": {"id": "msg-001", "conversation": "conv-001"},
+   "profile": {"id": "e9922810-0a85-43c1-8e78-be8343c1f8ed"},
+   "session": {"id": "11111111-1111-1111-1111-111111111111"},
+   "metadata": {"time": {"insert": "2026-06-06T12:05:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '2 days');
+
+
  -- ======== 2. Неактивный клиент (давно не заказывал - риск оттока - 95 дней назад) ===========
 INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
 ('b2c3d4e5-0002-4000-8000-000000000001', 'page-view',

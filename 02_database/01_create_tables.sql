@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 COMMENT ON TABLE profiles IS 'Справочник пользователей для расчёта признаков';
 
 -- =============================
--- ТАБЛИЦА 4: ml_features (18 признаков)
+-- ТАБЛИЦА 4: ml_features (24 признака)
 
 -- Удалить старую таблицу ml_features
 -- DROP TABLE IF EXISTS ml_features CASCADE;

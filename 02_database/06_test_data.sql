@@ -209,6 +209,29 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "metadata": {"time": {"insert": "2026-03-05T10:05:30Z"}}}}'::JSONB,
  NOW() - INTERVAL '95 days');
 
+ -- ======== Неактивный: push есть, но сообщения не открывает ===========
+INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
+-- profile-traits-update с push_id (95 дней назад)
+('b2c3d4e5-0002-4000-8000-000000000004', 'profile-traits-update',
+ '8a2edca4-5129-412a-8395-7a7a54b4f1a8', '22222222-2222-2222-2222-222222222222',
+ '{"event": {"id": "b2c3d4e5-0002-4000-8000-000000000004", "type": "profile-traits-update",
+   "properties": {"push_id": "fcm_token_old_xyz"},
+   "profile": {"id": "8a2edca4-5129-412a-8395-7a7a54b4f1a8"},
+   "session": {"id": "22222222-2222-2222-2222-222222222222"},
+   "metadata": {"time": {"insert": "2026-03-01T10:00:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '99 days'),
+
+-- message-status: delivered (95 дней назад)
+('b2c3d4e5-0002-4000-8000-000000000005', 'message-status',
+ '8a2edca4-5129-412a-8395-7a7a54b4f1a8', '22222222-2222-2222-2222-222222222222',
+ '{"event": {"id": "b2c3d4e5-0002-4000-8000-000000000005", "type": "message-status",
+   "properties": {"conversation": "conv-002", "type": "push", "status": "delivered"},
+   "profile": {"id": "8a2edca4-5129-412a-8395-7a7a54b4f1a8"},
+   "session": {"id": "22222222-2222-2222-2222-222222222222"},
+   "metadata": {"time": {"insert": "2026-03-05T09:00:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '95 days');
+
+
  -- ======== 3. Рисковый клиент (бросает корзины, негативные отзывы) ===========
 INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
 -- Визит на главную

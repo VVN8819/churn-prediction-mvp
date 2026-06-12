@@ -261,3 +261,48 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "session": {"id": "44444444-4444-4444-4444-444444444444"},
    "metadata": {"time": {"insert": "2026-06-05T12:05:30Z"}}}}'::JSONB,
  NOW() - INTERVAL '5 days');
+
+ -- ======== 5. Новый клиент (недавно зарегистрировался) ===========
+INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
+-- Регистрация (identification)
+('e5f6a7b8-0005-4000-8000-000000000001', 'identification',
+ 'f47ac10b-58cc-4372-a567-0e02b2c3d479', '55555555-5555-5555-5555-555555555555',
+ '{"event": {"id": "e5f6a7b8-0005-4000-8000-000000000001", "type": "identification",
+   "properties": {"phone": {"main": "79000000005"}, "firstname": "Olga"},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/", "path": "/", "title": "Главная"}},
+   "profile": {"id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"},
+   "session": {"id": "55555555-5555-5555-5555-555555555555"},
+   "metadata": {"time": {"insert": "2026-05-31T14:00:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '10 days'),
+
+-- Просмотр каталога
+('e5f6a7b8-0005-4000-8000-000000000002', 'page-view',
+ 'f47ac10b-58cc-4372-a567-0e02b2c3d479', '55555555-5555-5555-5555-555555555555',
+ '{"event": {"id": "e5f6a7b8-0005-4000-8000-000000000002", "type": "page-view",
+   "properties": {"is_authenticated": true},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/catalog", "path": "/catalog", "title": "Каталог"}},
+   "profile": {"id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"},
+   "session": {"id": "55555555-5555-5555-5555-555555555555"},
+   "metadata": {"time": {"insert": "2026-05-31T14:05:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '10 days'),
+
+-- Первый заказ
+('e5f6a7b8-0005-4000-8000-000000000003', 'checkout-started',
+ 'f47ac10b-58cc-4372-a567-0e02b2c3d479', '55555555-5555-5555-5555-555555555555',
+ '{"event": {"id": "e5f6a7b8-0005-4000-8000-000000000003", "type": "checkout-started",
+   "properties": {"id": "23924700", "order_type": "delivery", "value": 1200, "coupon": null, "channel": "desktop"},
+   "profile": {"id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"},
+   "session": {"id": "55555555-5555-5555-5555-555555555555"},
+   "metadata": {"time": {"insert": "2026-05-31T14:10:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '10 days'),
+
+-- Подтверждение заказа
+('e5f6a7b8-0005-4000-8000-000000000004', 'page-view',
+ 'f47ac10b-58cc-4372-a567-0e02b2c3d479', '55555555-5555-5555-5555-555555555555',
+ '{"event": {"id": "e5f6a7b8-0005-4000-8000-000000000004", "type": "page-view",
+   "properties": {"is_authenticated": true},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/order?id=23924700", "path": "/order", "title": "Заказ успешно оформлен"}},
+   "profile": {"id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"},
+   "session": {"id": "55555555-5555-5555-5555-555555555555"},
+   "metadata": {"time": {"insert": "2026-05-31T14:10:30Z"}}}}'::JSONB,
+ NOW() - INTERVAL '10 days');

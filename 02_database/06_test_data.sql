@@ -197,3 +197,67 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "session": {"id": "33333333-3333-3333-3333-333333333333"},
    "metadata": {"time": {"insert": "2026-05-22T10:00:00Z"}}}}'::JSONB,
  NOW() - INTERVAL '19 days');
+
+ -- ======== 4. Охотник за скидками (использует купоны) ===========
+INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
+-- Просмотр страницы акций
+('d4e5f6a7-0004-4000-8000-000000000001', 'page-view',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000001", "type": "page-view",
+   "properties": {"is_authenticated": true},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/actions", "path": "/actions", "title": "Акции"}},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-05T12:00:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '5 days'),
+
+-- Просмотр баннера акции
+('d4e5f6a7-0004-4000-8000-000000000002', 'promotion-viewed',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000002", "type": "promotion-viewed",
+   "properties": {"id": "4524adb6-84e3-4054-99b9-d28822bc6361", "name": "Вам подарок!", "type": "sale"},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-05T12:01:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '5 days'),
+
+-- Клик по баннеру
+('d4e5f6a7-0004-4000-8000-000000000003', 'promotion-clicked',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000003", "type": "promotion-clicked",
+   "properties": {"id": "4524adb6-84e3-4054-99b9-d28822bc6361", "url": {"page": "https://demo.vsem-edu-oblako.ru/catalog"}},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-05T12:01:30Z"}}}}'::JSONB,
+ NOW() - INTERVAL '5 days'),
+
+-- Добавление в корзину
+('d4e5f6a7-0004-4000-8000-000000000004', 'cart-changes',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000004", "type": "cart-changes",
+   "properties": {"products": [{"id": "102856298", "name": "Калифорния Классическая", "price": 540, "quantity": 2}], "total": 1080},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-05T12:03:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '5 days'),
+
+-- Заказ с купоном
+('d4e5f6a7-0004-4000-8000-000000000005', 'checkout-started',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000005", "type": "checkout-started",
+   "properties": {"id": "23924600", "order_type": "pickup", "value": 1800, "coupon": "SUMMER20", "channel": "android"},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-05T12:05:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '5 days'),
+
+-- Подтверждение заказа
+('d4e5f6a7-0004-4000-8000-000000000006', 'page-view',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000006", "type": "page-view",
+   "properties": {"is_authenticated": true},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/order?id=23924600", "path": "/order", "title": "Заказ успешно оформлен"}},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-05T12:05:30Z"}}}}'::JSONB,
+ NOW() - INTERVAL '5 days');

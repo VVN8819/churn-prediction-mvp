@@ -110,3 +110,37 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "session": {"id": "11111111-1111-1111-1111-111111111111"},
    "metadata": {"time": {"insert": "2026-06-08T10:00:00Z"}}}}'::JSONB,
  NOW() - INTERVAL '0 days');
+
+ -- ======== 2. Неактивный клиент (давно не заказывал - риск оттока - 95 дней назад) ===========
+INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
+('b2c3d4e5-0002-4000-8000-000000000001', 'page-view',
+ '8a2edca4-5129-412a-8395-7a7a54b4f1a8', '22222222-2222-2222-2222-222222222222',
+ '{"event": {"id": "b2c3d4e5-0002-4000-8000-000000000001", "type": "page-view",
+   "properties": {"is_authenticated": true},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/", "path": "/", "title": "Главная"}},
+   "profile": {"id": "8a2edca4-5129-412a-8395-7a7a54b4f1a8"},
+   "session": {"id": "22222222-2222-2222-2222-222222222222"},
+   "metadata": {"time": {"insert": "2026-03-05T10:00:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '95 days'),
+
+ ('b2c3d4e5-0002-4000-8000-000000000002', 'checkout-started',
+ '8a2edca4-5129-412a-8395-7a7a54b4f1a8', '22222222-2222-2222-2222-222222222222',
+ '{"event": {"id": "b2c3d4e5-0002-4000-8000-000000000002", "type": "checkout-started",
+   "properties": {"id": "23123001", "order_type": "delivery", "value": 1500, "coupon": null, "channel": "desktop"},
+   "profile": {"id": "8a2edca4-5129-412a-8395-7a7a54b4f1a8"},
+   "session": {"id": "22222222-2222-2222-2222-222222222222"},
+   "metadata": {"time": {"insert": "2026-03-05T10:05:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '95 days'),
+
+ -- Подтверждение заказа
+ ('b2c3d4e5-0002-4000-8000-000000000003', 'page-view',
+ '8a2edca4-5129-412a-8395-7a7a54b4f1a8', '22222222-2222-2222-2222-222222222222',
+ '{"event": {"id": "b2c3d4e5-0002-4000-8000-000000000003", "type": "page-view",
+   "properties": {"is_authenticated": true},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/order?id=23123001", "path": "/order", "title": "Заказ успешно оформлен"}},
+   "profile": {"id": "8a2edca4-5129-412a-8395-7a7a54b4f1a8"},
+   "session": {"id": "22222222-2222-2222-2222-222222222222"},
+   "metadata": {"time": {"insert": "2026-03-05T10:05:30Z"}}}}'::JSONB,
+ NOW() - INTERVAL '95 days');
+
+ 

@@ -466,13 +466,6 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
  NOW() - INTERVAL '4 days');
 
 
-
-
-
-
-
-
-
  -- ======== 5. Новый клиент (недавно зарегистрировался) ===========
 INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
 -- Регистрация (identification)
@@ -516,4 +509,42 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "profile": {"id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"},
    "session": {"id": "55555555-5555-5555-5555-555555555555"},
    "metadata": {"time": {"insert": "2026-05-31T14:10:30Z"}}}}'::JSONB,
+ NOW() - INTERVAL '10 days');
+
+ -- ======== Новый: Читает отзывы, обновляет профиль ===========
+INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
+-- page-view /reviews (читает отзывы перед первым заказом)
+('e5f6a7b8-0005-4000-8000-000000000005', 'page-view',
+ 'f47ac10b-58cc-4372-a567-0e02b2c3d479', '55555555-5555-5555-5555-555555555555',
+ '{"event": {"id": "e5f6a7b8-0005-4000-8000-000000000005", "type": "page-view",
+   "properties": {"is_authenticated": true},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/reviews", "path": "/reviews", "title": "Отзывы"}},
+   "profile": {"id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"},
+   "session": {"id": "55555555-5555-5555-5555-555555555555"},
+   "metadata": {"time": {"insert": "2026-05-31T14:07:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '10 days'),
+
+-- profile-update с birthday (заполненный профиль)
+('e5f6a7b8-0005-4000-8000-000000000006', 'profile-update',
+ 'f47ac10b-58cc-4372-a567-0e02b2c3d479', '55555555-5555-5555-5555-555555555555',
+ '{"event": {"id": "e5f6a7b8-0005-4000-8000-000000000006", "type": "profile-update",
+   "properties": {
+     "pii": {"firstname": "Olga", "birthday": "1995-09-25T00:00:00.000Z"},
+     "contact": {"phone": {"main": "79000000005"}}
+   },
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/profile", "path": "/profile", "title": "Редактирование профиля"}},
+   "profile": {"id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"},
+   "session": {"id": "55555555-5555-5555-5555-555555555555"},
+   "metadata": {"time": {"insert": "2026-05-31T13:50:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '10 days'),
+
+-- sign-in
+('e5f6a7b8-0005-4000-8000-000000000007', 'sign-in',
+ 'f47ac10b-58cc-4372-a567-0e02b2c3d479', '55555555-5555-5555-5555-555555555555',
+ '{"event": {"id": "e5f6a7b8-0005-4000-8000-000000000007", "type": "sign-in",
+   "properties": {"phone": {"main": "79000000005"}},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/login", "path": "/login", "title": "Вход"}},
+   "profile": {"id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"},
+   "session": {"id": "55555555-5555-5555-5555-555555555555"},
+   "metadata": {"time": {"insert": "2026-05-31T13:45:00Z"}}}}'::JSONB,
  NOW() - INTERVAL '10 days');

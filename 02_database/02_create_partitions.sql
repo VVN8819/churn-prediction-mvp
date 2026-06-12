@@ -31,48 +31,29 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================
--- Партиции на 12 месяцев вперёд
+-- Партиции за последние 12 месяцев + 12 месяцев вперёд
 
 DO $$
 DECLARE
+    start_date DATE := DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '12 months';
+    partition_name TEXT;
+    part_start DATE;
+    part_end DATE;
     i INTEGER;
-    partition_date DATE;
 BEGIN
-    FOR i IN 0..11 LOOP
-        partition_date := DATE_TRUNC('month', CURRENT_DATE + (i * INTERVAL '1 month'));
-        PERFORM create_monthly_partition('raw_events', partition_date);
+    FOR i IN 0..23 LOOP -- 24 месяца
+        part_start := start_date + (i * INTERVAL '1 month');
+        part_end := part_start + INTERVAL '1 month';
+        partition_name := 'raw_events_' || TO_CHAR(part_start, 'YYYY_MM');
+
+        EXECUTE FORMAT(
+            'CREATE TABLE IF NOT EXISTS %I PARTITION OF raw_events FOR VALUES FROM (%L) TO (%L)',
+            partition_name,
+            part_start,
+            part_end
+        );
+        
+        RAISE NOTICE 'Created: % [% - %)', partition_name, part_start, part_end;
     END LOOP;
 END $$;
 
--- ============================================
--- Триггер: если придут данные за месяц, который мы не предусмотрели
-
-CREATE OR REPLACE FUNCTION ensure_partition_exists()
-RETURNS TRIGGER AS $$
-DECLARE
-    partition_date DATE;
-    partition_name TEXT;
-BEGIN
-    -- месяц нового события
-    partition_date := DATE_TRUNC('month', NEW.inserted_at);
-    partition_name := 'raw_events_' || TO_CHAR(partition_date, 'YYYY_MM');
-    
-    -- Проверяем существует ли партиция
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_tables 
-        WHERE tablename = partition_name 
-        AND schemaname = 'public'
-    ) THEN
-        -- Создаём новую партицию
-        PERFORM create_monthly_partition('raw_events', partition_date);
-    END IF;
-    
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Привязываем триггер к таблице raw_events
-CREATE TRIGGER trigger_ensure_partition
-BEFORE INSERT ON raw_events
-FOR EACH ROW
-EXECUTE FUNCTION ensure_partition_exists();

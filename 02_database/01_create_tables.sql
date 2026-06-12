@@ -69,24 +69,36 @@ COMMENT ON TABLE profiles IS 'Справочник пользователей д
 CREATE TABLE IF NOT EXISTS ml_features (
     profile_id UUID PRIMARY KEY,
     snapshot_date DATE NOT NULL DEFAULT CURRENT_DATE,
+
     days_since_last_order INTEGER,
     checkout_value_trend NUMERIC(10,4),
+    avg_cart_value_30d NUMERIC(10,2),
+    cart_to_checkout_ratio NUMERIC(5,2),
+
     cart_abandonment_rate_30d NUMERIC(5,4),
     cart_browse_abandon_rate_30d NUMERIC(5,4),
     checkout_frustration_index NUMERIC(5,4),
+    checkout_completion_rate NUMERIC(5,4),
     auth_on_checkout_flag BOOLEAN,
+
     coupon_dependency_ratio NUMERIC(5,4),
-    session_engagement_score NUMERIC(5,4),
-    delta_page_views_14d NUMERIC(7,4),
     promo_ignore_rate_14d NUMERIC(5,4),
+    promo_interest_rate NUMERIC(5,4),
     message_open_rate_30d NUMERIC(5,4),
     push_channel_available BOOLEAN,
+
+    personal_offer_conversion_rate NUMERIC(5,4),
+    personal_views_count_30d INTEGER DEFAULT 0,
+    avg_copy_reaction_seconds NUMERIC(8,2),
+    
+    session_engagement_score NUMERIC(5,4),
+    delta_page_views_14d NUMERIC(7,4),
     phone_changed_90d BOOLEAN,
     profile_completeness_score NUMERIC(5,4),
     avg_rating_90d NUMERIC(3,2),
     has_unpublished_review BOOLEAN,
-    avg_cart_value_30d NUMERIC(10,2),
-    cart_to_checkout_ratio NUMERIC(5,2),
+    reviews_reading_behavior VARCHAR(32),
+
     churn_probability NUMERIC(5,4),
     risk_level VARCHAR(16),
     computed_at TIMESTAMPTZ DEFAULT NOW(),

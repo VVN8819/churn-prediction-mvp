@@ -34,6 +34,7 @@ churn-prediction-mvp/
         04_create_materialized_views.sql - Материализованные представления для Feature Store для мгновенных ответов на дашборде
         05_maintenance.sql - Регулярное обслуживание базы данных для Timeweb Cloud чтобы БД не деградировала со временем
         test_queries.sql - Проверочные запросы
+        06_test_data.sql - Тестовые данные
     
     03_etl/ - Шаг 3: ETL (потом)
         calculate_features.py - Расчёт 16 признаков

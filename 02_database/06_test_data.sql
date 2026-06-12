@@ -112,6 +112,7 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
  NOW() - INTERVAL '0 days');
 
 -- ======== Персональные предложения, чтение отзывов, push, сообщения ===========
+INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
 -- personal-view в /profile
 ('a1b2c3d4-0001-4000-8000-000000000009', 'personal-view',
  'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
@@ -209,6 +210,7 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
  NOW() - INTERVAL '95 days');
 
  -- ======== Неактивный: push есть, но сообщения не открывает ===========
+INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
 -- profile-traits-update с push_id (95 дней назад)
 ('b2c3d4e5-0002-4000-8000-000000000004', 'profile-traits-update',
  '8a2edca4-5129-412a-8395-7a7a54b4f1a8', '22222222-2222-2222-2222-222222222222',
@@ -286,6 +288,7 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
  NOW() - INTERVAL '19 days');
 
  -- ======== Рисковый: Персональные предложения игнорирует, читает отзывы, обновляет профиль ===========
+INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
 -- personal-view в /profile (НО НЕ копирует промокод)
 ('c3d4e5f6-0003-4000-8000-000000000006', 'personal-view',
  'd64347d4-8145-4161-8cb4-affc276ed890', '33333333-3333-3333-3333-333333333333',
@@ -397,6 +400,77 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "session": {"id": "44444444-4444-4444-4444-444444444444"},
    "metadata": {"time": {"insert": "2026-06-05T12:05:30Z"}}}}'::JSONB,
  NOW() - INTERVAL '5 days');
+
+ -- ======== Охотник за скидками: Персональные предложения, закрытие акций, сообщения ===========
+INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
+-- personal-view в /profile
+('d4e5f6a7-0004-4000-8000-000000000007', 'personal-view',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000007", "type": "personal-view",
+   "properties": {"id": "888ea088-4074-43a7-a7b9-d53b48d8ab4e"},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/profile", "path": "/profile", "title": "Личный кабинет"}},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-05T11:55:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '5 days'),
+
+-- copy-promocode через 20 с
+('d4e5f6a7-0004-4000-8000-000000000008', 'copy-promocode',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000008", "type": "copy-promocode",
+   "properties": {"id": "888ea088-4074-43a7-a7b9-d53b48d8ab4e"},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/profile", "path": "/profile", "title": "Личный кабинет"}},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-05T11:55:20Z"}}}}'::JSONB,
+ NOW() - INTERVAL '5 days'),
+
+ -- promotion-close (закрыл другую акцию без клика)
+('d4e5f6a7-0004-4000-8000-000000000009', 'promotion-close',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000009", "type": "promotion-close",
+   "properties": {"id": "5555adb6-84e3-4054-99b9-d28822bc6362", "name": "Скидка 10%"},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-05T11:50:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '5 days'),
+
+-- profile-traits-update с push_id
+('d4e5f6a7-0004-4000-8000-000000000010', 'profile-traits-update',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000010", "type": "profile-traits-update",
+   "properties": {"push_id": "fcm_token_anna_67890"},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-01T11:00:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '7 days'),
+
+ -- message-status: delivered
+('d4e5f6a7-0004-4000-8000-000000000011', 'message-status',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000011", "type": "message-status",
+   "properties": {"conversation": "conv-003", "type": "push", "status": "delivered"},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-04T15:00:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '4 days'),
+
+-- message-status: clicked (кликнул по сообщению)
+('d4e5f6a7-0004-4000-8000-000000000012', 'message-status',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000012", "type": "message-status",
+   "properties": {"conversation": "conv-003", "type": "push", "status": "clicked"},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-04T15:05:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '4 days');
+
+
+
+
+
+
+
 
 
  -- ======== 5. Новый клиент (недавно зарегистрировался) ===========

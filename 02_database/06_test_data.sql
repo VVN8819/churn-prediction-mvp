@@ -143,4 +143,57 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "metadata": {"time": {"insert": "2026-03-05T10:05:30Z"}}}}'::JSONB,
  NOW() - INTERVAL '95 days');
 
- 
+ -- ======== 3. Рисковый клиент (бросает корзины, негативные отзывы) ===========
+INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
+-- Визит на главную
+('c3d4e5f6-0003-4000-8000-000000000001', 'page-view',
+ 'd64347d4-8145-4161-8cb4-affc276ed890', '33333333-3333-3333-3333-333333333333',
+ '{"event": {"id": "c3d4e5f6-0003-4000-8000-000000000001", "type": "page-view",
+   "properties": {"is_authenticated": true},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/", "path": "/", "title": "Главная"}},
+   "profile": {"id": "d64347d4-8145-4161-8cb4-affc276ed890"},
+   "session": {"id": "33333333-3333-3333-3333-333333333333"},
+   "metadata": {"time": {"insert": "2026-05-21T15:00:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '20 days'),
+
+-- Просмотр товара
+('c3d4e5f6-0003-4000-8000-000000000002', 'product-details-page-view',
+ 'd64347d4-8145-4161-8cb4-affc276ed890', '33333333-3333-3333-3333-333333333333',
+ '{"event": {"id": "c3d4e5f6-0003-4000-8000-000000000002", "type": "product-details-page-view",
+   "properties": {"id": "102856305", "name": "Комбо 3=1", "price": 449},
+   "profile": {"id": "d64347d4-8145-4161-8cb4-affc276ed890"},
+   "session": {"id": "33333333-3333-3333-3333-333333333333"},
+   "metadata": {"time": {"insert": "2026-05-21T15:01:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '20 days'),
+
+-- Добавление в корзину
+('c3d4e5f6-0003-4000-8000-000000000003', 'cart-changes',
+ 'd64347d4-8145-4161-8cb4-affc276ed890', '33333333-3333-3333-3333-333333333333',
+ '{"event": {"id": "c3d4e5f6-0003-4000-8000-000000000003", "type": "cart-changes",
+   "properties": {"products": [{"id": "102856305", "name": "Комбо 3=1", "price": 449, "quantity": 1}], "total": 449},
+   "profile": {"id": "d64347d4-8145-4161-8cb4-affc276ed890"},
+   "session": {"id": "33333333-3333-3333-3333-333333333333"},
+   "metadata": {"time": {"insert": "2026-05-21T15:02:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '20 days'),
+
+-- Удаление из корзины на /checkout (серьёзный отказ)
+('c3d4e5f6-0003-4000-8000-000000000004', 'cart-delete',
+ 'd64347d4-8145-4161-8cb4-affc276ed890', '33333333-3333-3333-3333-333333333333',
+ '{"event": {"id": "c3d4e5f6-0003-4000-8000-000000000004", "type": "cart-delete",
+   "properties": {},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/checkout", "path": "/checkout", "title": "Оформление заказа"}},
+   "profile": {"id": "d64347d4-8145-4161-8cb4-affc276ed890"},
+   "session": {"id": "33333333-3333-3333-3333-333333333333"},
+   "metadata": {"time": {"insert": "2026-05-21T15:05:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '20 days'),
+
+-- Негативный отзыв (2 звезды)
+('c3d4e5f6-0003-4000-8000-000000000005', 'rating',
+ 'd64347d4-8145-4161-8cb4-affc276ed890', '33333333-3333-3333-3333-333333333333',
+ '{"event": {"id": "c3d4e5f6-0003-4000-8000-000000000005", "type": "rating",
+   "properties": {"id": "23924500", "review": "Плохо", "rate": 2},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/", "path": "/", "title": "Главная"}},
+   "profile": {"id": "d64347d4-8145-4161-8cb4-affc276ed890"},
+   "session": {"id": "33333333-3333-3333-3333-333333333333"},
+   "metadata": {"time": {"insert": "2026-05-22T10:00:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '19 days');

@@ -28,6 +28,24 @@ cte_days_since_last_order AS (
       AND event_data->'event'->'context'->'page'->>'path' = '/order'
       AND inserted_at > NOW() - INTERVAL '90 days'
     GROUP BY profile_id
+),
+
+-- cart_abandonment_rate_30d: % отказов на /checkout
+cte_cart_abandonment_rate AS (
+    SELECT
+        profile_id,
+        ROUND(
+            COUNT(*) FILTER (
+                WHERE event_type = 'cart-delete'
+                AND event_data->'event'->'context'->'page'->>'path' = '/checkout'
+            )::NUMERIC /
+            NULLIF(COUNT(*) FILTER (WHERE event_type = 'checkout-started'), 0),
+            4
+        ) AS cart_abandonment_rate_30d
+    FROM raw_events
+    WHERE event_type IN ('cart-delete', 'checkout-started')
+      AND inserted_at > NOW() - INTERVAL '30 days'
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -35,7 +53,11 @@ SELECT
     p.profile_id,
     CURRENT_DATE AS snapshot_date,
 
+    -- 1: Временные и транзакционные
     COALESCE(d.days_since_last_order, 999) AS days_since_last_order,
+
+    -- 2: Отказы
+    COALESCE(ab.cart_abandonment_rate_30d, 0.0) AS cart_abandonment_rate_30d,
 
     NULL::NUMERIC(5,4) AS churn_probability,
     NULL::VARCHAR(16) AS risk_level,
@@ -44,6 +66,7 @@ SELECT
 
 FROM active_profiles p
 LEFT JOIN cte_days_since_last_order d USING (profile_id)
+LEFT JOIN cte_cart_abandonment_rate ab USING (profile_id)
 ORDER BY p.profile_id;
 
 COMMENT ON MATERIALIZED VIEW mv_ml_features IS

@@ -32,7 +32,7 @@ churn-prediction-mvp/
         02_create_partitions.sql - Партиционирование raw_events по месяцам для производительности на Timeweb Cloud
         03_create_indexes.sql - индексы для оптимизации производительности
         04_create_materialized_views.sql - Материализованные представления для Feature Store для мгновенных ответов на дашборде
-        05_maintenance.sql - Регулярное обслуживание базы данных для Timeweb Cloud чтобы БД не деградировала со временем
+        05_create_maintenance.sql - Регулярное обслуживание базы данных для Timeweb Cloud чтобы БД не деградировала со временем
         test_queries.sql - Проверочные запросы
         06_test_data.sql - Тестовые данные
     

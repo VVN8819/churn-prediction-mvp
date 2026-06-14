@@ -36,6 +36,7 @@ INSERT INTO ml_features (
     reviews_reading_behavior,
     promo_interest_rate,
     checkout_value_trend,
+    auth_on_checkout_flag,
     churn_probability,
     risk_level,
     computed_at,
@@ -67,6 +68,7 @@ SELECT
     reviews_reading_behavior,
     promo_interest_rate,
     checkout_value_trend,
+    auth_on_checkout_flag,
     churn_probability,
     risk_level,
     computed_at,
@@ -98,6 +100,7 @@ DO UPDATE SET
     reviews_reading_behavior = EXCLUDED.reviews_reading_behavior,
     promo_interest_rate = EXCLUDED.promo_interest_rate,
     checkout_value_trend = EXCLUDED.checkout_value_trend,
+    auth_on_checkout_flag = EXCLUDED.auth_on_checkout_flag,
     computed_at = NOW();
 
 -- 4. Записываем завершение операции в лог

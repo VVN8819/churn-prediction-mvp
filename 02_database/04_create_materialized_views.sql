@@ -112,6 +112,21 @@ cte_personal_conversion AS (
         ) AS personal_offer_conversion_rate
     FROM funnel
     GROUP BY profile_id
+),
+
+-- promo_ignore_rate_14d: % игнорирования баннерных акций
+cte_promo_ignore AS (
+    SELECT
+        profile_id,
+        ROUND(
+            COUNT(*) FILTER (WHERE event_type = 'promotion-close')::NUMERIC /
+            NULLIF(COUNT(*) FILTER (WHERE event_type IN ('promotion-viewed', 'promotion-close')), 0),
+            4
+        ) AS promo_ignore_rate_14d
+    FROM raw_events
+    WHERE event_type IN ('promotion-viewed', 'promotion-close')
+      AND inserted_at > NOW() - INTERVAL '14 days'
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -130,6 +145,9 @@ SELECT
     -- 3: Персональные предложения
     COALESCE(pc.personal_offer_conversion_rate, 0.0) AS personal_offer_conversion_rate,
 
+    -- 4: Маркетинг и коммуникации
+    COALESCE(pi.promo_ignore_rate_14d, 0.0) AS promo_ignore_rate_14d,
+
     NULL::NUMERIC(5,4) AS churn_probability,
     NULL::VARCHAR(16) AS risk_level,
     NOW() AS computed_at,
@@ -141,6 +159,7 @@ LEFT JOIN cte_cart_abandonment_rate ab USING (profile_id)
 LEFT JOIN cte_checkout_completion cc USING (profile_id)
 LEFT JOIN cte_frustration f USING (profile_id)
 LEFT JOIN cte_personal_conversion pc USING (profile_id)
+LEFT JOIN cte_promo_ignore pi USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

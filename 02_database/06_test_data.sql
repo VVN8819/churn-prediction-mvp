@@ -176,6 +176,30 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "metadata": {"time": {"insert": "2026-06-06T12:05:00Z"}}}}'::JSONB,
  NOW() - INTERVAL '2 days');
 
+-- Для VVNvvn (реакция 30 секунд)
+INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
+('a1b2c3d4-0001-4000-8000-000000000009', 'personal-view',
+ 'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
+ '{"event": {"id": "a1b2c3d4-0001-4000-8000-000000000009", "type": "personal-view",
+   "properties": {"id": "941ea088-4074-43a7-a7b9-d53b48d8ab4c"},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/profile", "path": "/profile"}},
+   "profile": {"id": "e9922810-0a85-43c1-8e78-be8343c1f8ed"},
+   "session": {"id": "11111111-1111-1111-1111-111111111111"},
+   "metadata": {"time": {"insert": "2026-06-07T10:06:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '1 day'),
+
+('a1b2c3d4-0001-4000-8000-000000000010', 'copy-promocode',
+ 'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
+ '{"event": {"id": "a1b2c3d4-0001-4000-8000-000000000010", "type": "copy-promocode",
+   "properties": {"id": "941ea088-4074-43a7-a7b9-d53b48d8ab4c"},
+   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/profile", "path": "/profile"}},
+   "profile": {"id": "e9922810-0a85-43c1-8e78-be8343c1f8ed"},
+   "session": {"id": "11111111-1111-1111-1111-111111111111"},
+   "metadata": {"time": {"insert": "2026-06-07T10:06:30Z"}}}}'::JSONB,
+ NOW() - INTERVAL '1 day');
+
+
+
 
  -- ======== 2. Неактивный клиент (давно не заказывал - риск оттока - 95 дней назад) ===========
 INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES

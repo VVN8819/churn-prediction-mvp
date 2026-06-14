@@ -401,10 +401,10 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
    "session": {"id": "44444444-4444-4444-4444-444444444444"},
    "metadata": {"time": {"insert": "2026-06-05T12:05:30Z"}}}}'::JSONB,
- NOW() - INTERVAL '5 days');
+ NOW() - INTERVAL '5 days'),
 
  -- ======== Охотник за скидками: Персональные предложения, закрытие акций, сообщения ===========
-INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
+-- INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
 -- personal-view в /profile
 ('d4e5f6a7-0004-4000-8000-000000000007', 'personal-view',
  '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
@@ -465,7 +465,18 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
    "session": {"id": "44444444-4444-4444-4444-444444444444"},
    "metadata": {"time": {"insert": "2026-06-04T15:05:00Z"}}}}'::JSONB,
- NOW() - INTERVAL '4 days');
+ NOW() - INTERVAL '4 days'),
+
+ -- Второй заказ для Анны (через 7 дней после первого, на другую сумму, чтобы был трен)
+-- INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
+('d4e5f6a7-0004-4000-8000-000000000013', 'checkout-started',
+ '99e5b77f-a446-4704-ac87-6595c39d1953', '44444444-4444-4444-4444-444444444444',
+ '{"event": {"id": "d4e5f6a7-0004-4000-8000-000000000013", "type": "checkout-started",
+   "properties": {"id": "23924601", "order_type": "pickup", "value": 2500, "coupon": null, "channel": "android"},
+   "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
+   "session": {"id": "44444444-4444-4444-4444-444444444444"},
+   "metadata": {"time": {"insert": "2026-06-08T12:05:00Z"}}}}'::JSONB,
+ NOW() - INTERVAL '2 days');
 
 
  -- ======== 5. Новый клиент (недавно зарегистрировался) ===========

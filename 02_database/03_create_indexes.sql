@@ -34,8 +34,8 @@ CREATE INDEX IF NOT EXISTS idx_log_status ON events_processing_log (status);
 CREATE INDEX IF NOT EXISTS idx_log_time ON events_processing_log (started_at);
 
 -- Индексы для быстрого доступа idx_mv_
-CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_ml_features_profile ON mv_ml_features (profile_id);
-CREATE INDEX IF NOT EXISTS idx_mv_ml_features_snapshot ON mv_ml_features (snapshot_date);
+-- CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_ml_features_profile ON mv_ml_features (profile_id);
+-- CREATE INDEX IF NOT EXISTS idx_mv_ml_features_snapshot ON mv_ml_features (snapshot_date);
 
 -- Обновить статистику для оптимизатора запросов
 ANALYZE events_queue;

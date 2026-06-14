@@ -69,5 +69,9 @@ LEFT JOIN cte_days_since_last_order d USING (profile_id)
 LEFT JOIN cte_cart_abandonment_rate ab USING (profile_id)
 ORDER BY p.profile_id;
 
+-- Индексы для быстрого доступа idx_mv_
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_ml_features_profile ON mv_ml_features (profile_id);
+CREATE INDEX IF NOT EXISTS idx_mv_ml_features_snapshot ON mv_ml_features (snapshot_date);
+
 COMMENT ON MATERIALIZED VIEW mv_ml_features IS
     'Feature Store: рассчитывает 24 признака для всех активных пользователей за один проход';

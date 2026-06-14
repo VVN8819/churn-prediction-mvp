@@ -230,6 +230,17 @@ cte_phone_changed AS (
     )
     AND inserted_at > NOW() - INTERVAL '90 days'
     GROUP BY profile_id
+),
+
+-- avg_rating_90d: Средняя оценка за 90 дней 13
+cte_avg_rating AS (
+    SELECT
+        profile_id,
+        ROUND(AVG(CAST(event_data->'event'->'properties'->>'rate' AS NUMERIC)), 2) AS avg_rating_90d
+    FROM raw_events
+    WHERE event_type = 'rating'
+      AND inserted_at > NOW() - INTERVAL '90 days'
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -258,6 +269,7 @@ SELECT
     -- 5: Поведенческие и профильные
     COALESCE(e.session_engagement_score, 0.0) AS session_engagement_score,
     COALESCE(ph.phone_changed_90d, FALSE) AS phone_changed_90d,
+    COALESCE(ar.avg_rating_90d, 5.0) AS avg_rating_90d,
 
     NULL::NUMERIC(5,4) AS churn_probability,
     NULL::VARCHAR(16) AS risk_level,
@@ -277,6 +289,7 @@ LEFT JOIN cte_browse_abandon ba USING (profile_id)
 LEFT JOIN cte_personal_views pv USING (profile_id)
 LEFT JOIN cte_push_available pa USING (profile_id)
 LEFT JOIN cte_phone_changed ph USING (profile_id)
+LEFT JOIN cte_avg_rating ar USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

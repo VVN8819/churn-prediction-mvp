@@ -151,7 +151,7 @@ cte_engagement AS (
     GROUP BY profile_id
 ),
 
--- 8. message_open_rate_30d: % открытых сообщений
+-- message_open_rate_30d: % открытых сообщений
 cte_message_open AS (
     SELECT
         profile_id,
@@ -171,6 +171,25 @@ cte_message_open AS (
     WHERE event_type IN ('message-status', 'message-opened')
       AND inserted_at > NOW() - INTERVAL '30 days'
     GROUP BY profile_id
+),
+
+-- cart_browse_abandon_rate_30d: % отказов в каталоге/на главной
+cte_browse_abandon AS (
+    SELECT
+        profile_id,
+        ROUND(
+            COUNT(*) FILTER (
+                WHERE event_type = 'cart-delete'
+                AND (event_data->'event'->'context'->'page'->>'path' LIKE '/catalog%'
+                     OR event_data->'event'->'context'->'page'->>'path' = '/')
+            )::NUMERIC /
+            NULLIF(COUNT(*) FILTER (WHERE event_type = 'cart-changes'), 0),
+            4
+        ) AS cart_browse_abandon_rate_30d
+    FROM raw_events
+    WHERE event_type IN ('cart-delete', 'cart-changes')
+      AND inserted_at > NOW() - INTERVAL '30 days'
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -185,6 +204,7 @@ SELECT
     COALESCE(ab.cart_abandonment_rate_30d, 0.0) AS cart_abandonment_rate_30d,
     COALESCE(cc.checkout_completion_rate, 0.0) AS checkout_completion_rate,
     COALESCE(f.checkout_frustration_index, 0.0) AS checkout_frustration_index,
+    COALESCE(ba.cart_browse_abandon_rate_30d, 0.0) AS cart_browse_abandon_rate_30d,
 
     -- 3: Персональные предложения
     COALESCE(pc.personal_offer_conversion_rate, 0.0) AS personal_offer_conversion_rate,
@@ -210,6 +230,7 @@ LEFT JOIN cte_personal_conversion pc USING (profile_id)
 LEFT JOIN cte_promo_ignore pi USING (profile_id)
 LEFT JOIN cte_engagement e USING (profile_id)
 LEFT JOIN cte_message_open mo USING (profile_id)
+LEFT JOIN cte_browse_abandon ba USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

@@ -300,6 +300,29 @@ cte_profile_completeness AS (
                 END,
                 inserted_at DESC
     ) latest_profile
+),
+
+-- delta_page_views_14d: Дельта просмотров (последние 14 дней vs предыдущие 14) 17
+cte_delta_views AS (
+    WITH recent AS (
+        SELECT profile_id, COUNT(*) AS v14
+        FROM raw_events
+        WHERE event_type = 'page-view'
+          AND inserted_at > NOW() - INTERVAL '14 days'
+        GROUP BY profile_id
+    ),
+    previous AS (
+        SELECT profile_id, COUNT(*) AS v_prev
+        FROM raw_events
+        WHERE event_type = 'page-view'
+          AND inserted_at BETWEEN NOW() - INTERVAL '28 days' AND NOW() - INTERVAL '14 days'
+        GROUP BY profile_id
+    )
+    SELECT
+        r.profile_id,
+        ROUND((r.v14 - COALESCE(p.v_prev, 0))::NUMERIC / NULLIF(p.v_prev, 0), 4) AS delta_page_views_14d
+    FROM recent r
+    LEFT JOIN previous p USING (profile_id)
 )
 
 -- 3. Сборка признака
@@ -332,6 +355,7 @@ SELECT
     COALESCE(ph.phone_changed_90d, FALSE) AS phone_changed_90d,
     COALESCE(ar.avg_rating_90d, 5.0) AS avg_rating_90d,
     COALESCE(cpl.profile_completeness_score, 0.0) AS profile_completeness_score,
+    COALESCE(dv.delta_page_views_14d, 0.0) AS delta_page_views_14d,
 
     NULL::NUMERIC(5,4) AS churn_probability,
     NULL::VARCHAR(16) AS risk_level,
@@ -355,6 +379,7 @@ LEFT JOIN cte_avg_rating ar USING (profile_id)
 LEFT JOIN cte_coupon_dependency cd USING (profile_id)
 LEFT JOIN cte_avg_cart a USING (profile_id)
 LEFT JOIN cte_profile_completeness cpl USING (profile_id)
+LEFT JOIN cte_delta_views dv USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

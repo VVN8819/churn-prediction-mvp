@@ -31,6 +31,7 @@ INSERT INTO ml_features (
     profile_completeness_score,
     delta_page_views_14d,
     has_unpublished_review,
+    cart_to_checkout_ratio,
     churn_probability,
     risk_level,
     computed_at,
@@ -57,6 +58,7 @@ SELECT
     profile_completeness_score,
     delta_page_views_14d,
     has_unpublished_review,
+    cart_to_checkout_ratio,
     churn_probability,
     risk_level,
     computed_at,
@@ -83,6 +85,7 @@ DO UPDATE SET
     profile_completeness_score = EXCLUDED.profile_completeness_score,
     delta_page_views_14d = EXCLUDED.delta_page_views_14d,
     has_unpublished_review = EXCLUDED.has_unpublished_review,
+    cart_to_checkout_ratio = EXCLUDED.cart_to_checkout_ratio,
     computed_at = NOW();
 
 -- 4. Записываем завершение операции в лог

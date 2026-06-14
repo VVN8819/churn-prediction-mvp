@@ -447,7 +447,7 @@ cte_promo_interest AS (
     FROM behavior
 ),
 
--- 23. checkout_value_trend: Линейный тренд суммы заказа за 30 дней
+-- checkout_value_trend: Линейный тренд суммы заказа за 30 дней 23
 cte_value_trend AS (
     SELECT
         profile_id,
@@ -464,6 +464,20 @@ cte_value_trend AS (
       AND event_data->'event'->'properties'->>'value' IS NOT NULL
     GROUP BY profile_id
     HAVING COUNT(*) >= 2  -- Нужно минимум 2 заказа для расчёта тренда
+),
+
+-- auth_on_checkout_flag: Флаг неавторизованного посещения чекаута 24
+cte_auth_flag AS (
+    SELECT
+        profile_id,
+        BOOL_OR(
+                event_data->'event'->'context'->'page'->>'path' = '/checkout'
+                AND event_data->'event'->'properties'->>'is_authenticated' = 'false'
+        ) AS auth_on_checkout_flag
+    FROM raw_events
+    WHERE event_type = 'page-view'
+      AND inserted_at > NOW() - INTERVAL '30 days'
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -482,6 +496,7 @@ SELECT
     COALESCE(cc.checkout_completion_rate, 0.0) AS checkout_completion_rate,
     COALESCE(f.checkout_frustration_index, 0.0) AS checkout_frustration_index,
     COALESCE(ba.cart_browse_abandon_rate_30d, 0.0) AS cart_browse_abandon_rate_30d,
+    COALESCE(af.auth_on_checkout_flag, FALSE) AS auth_on_checkout_flag,
 
     -- 3: Персональные предложения
     COALESCE(pc.personal_offer_conversion_rate, 0.0) AS personal_offer_conversion_rate,
@@ -533,6 +548,7 @@ LEFT JOIN cte_copy_reaction cr USING (profile_id)
 LEFT JOIN cte_reviews_behavior rb USING (profile_id)
 LEFT JOIN cte_promo_interest pir USING (profile_id)
 LEFT JOIN cte_value_trend t USING (profile_id)
+LEFT JOIN cte_auth_flag af USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

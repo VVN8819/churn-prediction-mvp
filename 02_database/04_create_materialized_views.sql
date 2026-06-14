@@ -365,6 +365,30 @@ cte_cart_checkout_ratio AS (
     FROM cart c
     JOIN checkout ch USING (profile_id, session_id)
     GROUP BY c.profile_id
+),
+
+-- 20. avg_copy_reaction_seconds: Среднее время реакции на копирование промокода
+cte_copy_reaction AS (
+    WITH funnel AS (
+        SELECT
+            profile_id,
+            session_id,
+            event_data->'event'->'properties'->>'id' AS offer_id,
+            MIN(inserted_at) FILTER (WHERE event_type = 'personal-view') AS viewed_at,
+            MIN(inserted_at) FILTER (WHERE event_type = 'copy-promocode') AS copied_at
+        FROM raw_events
+        WHERE event_type IN ('personal-view', 'copy-promocode')
+          AND inserted_at > NOW() - INTERVAL '30 days'
+        GROUP BY profile_id, session_id, offer_id
+    )
+    SELECT
+        profile_id,
+        ROUND(AVG(EXTRACT(EPOCH FROM (copied_at - viewed_at))), 2) AS avg_copy_reaction_seconds
+    FROM funnel
+    WHERE viewed_at IS NOT NULL
+      AND copied_at IS NOT NULL
+      AND copied_at > viewed_at
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -386,6 +410,7 @@ SELECT
     -- 3: Персональные предложения
     COALESCE(pc.personal_offer_conversion_rate, 0.0) AS personal_offer_conversion_rate,
     COALESCE(pv.personal_views_count_30d, 0) AS personal_views_count_30d,
+    COALESCE(cr.avg_copy_reaction_seconds, 0.0) AS avg_copy_reaction_seconds,
 
     -- 4: Маркетинг и коммуникации
     COALESCE(pi.promo_ignore_rate_14d, 0.0) AS promo_ignore_rate_14d,
@@ -426,6 +451,7 @@ LEFT JOIN cte_profile_completeness cpl USING (profile_id)
 LEFT JOIN cte_delta_views dv USING (profile_id)
 LEFT JOIN cte_unpublished_review ur USING (profile_id)
 LEFT JOIN cte_cart_checkout_ratio r USING (profile_id)
+LEFT JOIN cte_copy_reaction cr USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

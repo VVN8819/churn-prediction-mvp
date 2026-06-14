@@ -25,6 +25,7 @@ INSERT INTO ml_features (
     personal_views_count_30d,
     push_channel_available,
     phone_changed_90d,
+    avg_rating_90d,
     churn_probability,
     risk_level,
     computed_at,
@@ -45,6 +46,7 @@ SELECT
     personal_views_count_30d,
     push_channel_available,
     phone_changed_90d,
+    avg_rating_90d,
     churn_probability,
     risk_level,
     computed_at,
@@ -65,6 +67,7 @@ DO UPDATE SET
     personal_views_count_30d = EXCLUDED.personal_views_count_30d,
     push_channel_available = EXCLUDED.push_channel_available,
     phone_changed_90d = EXCLUDED.phone_changed_90d,
+    avg_rating_90d = EXCLUDED.avg_rating_90d,
     computed_at = NOW();
 
 -- 4. Записываем завершение операции в лог

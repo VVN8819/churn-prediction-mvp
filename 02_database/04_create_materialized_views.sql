@@ -267,6 +267,39 @@ cte_avg_cart AS (
     WHERE event_type = 'cart-changes'
       AND inserted_at > NOW() - INTERVAL '30 days'
     GROUP BY profile_id
+),
+
+-- profile_completeness_score: Заполненность профиля 16
+-- (телефон 0.4 + имя 0.3 + день рождения 0.3)
+cte_profile_completeness AS (
+    SELECT
+        profile_id,
+        ROUND(
+            CASE WHEN COALESCE(
+                event_data->'event'->'properties'->'phone'->>'main',
+                event_data->'event'->'properties'->'contact'->'phone'->>'main'
+            ) IS NOT NULL THEN 0.4 ELSE 0 END +
+            CASE WHEN COALESCE(
+                event_data->'event'->'properties'->'pii'->>'firstname',
+                event_data->'event'->'properties'->>'firstname'
+            ) IS NOT NULL THEN 0.3 ELSE 0 END +
+            CASE WHEN COALESCE(
+                event_data->'event'->'properties'->>'birthday',
+                event_data->'event'->'properties'->'pii'->>'birthday'
+            ) IS NOT NULL THEN 0.3 ELSE 0 END
+        , 2) AS profile_completeness_score
+    FROM (
+        SELECT DISTINCT ON (profile_id) profile_id, event_data
+        FROM raw_events
+        WHERE event_type IN ('identification', 'profile-update')
+        ORDER BY profile_id,
+                CASE
+                    WHEN event_type = 'identification' AND event_data->'event'->'context'->'page'->>'path' = '/checkout' THEN 1
+                    WHEN event_type = 'profile-update' THEN 2
+                    ELSE 3
+                END,
+                inserted_at DESC
+    ) latest_profile
 )
 
 -- 3. Сборка признака
@@ -298,6 +331,7 @@ SELECT
     COALESCE(e.session_engagement_score, 0.0) AS session_engagement_score,
     COALESCE(ph.phone_changed_90d, FALSE) AS phone_changed_90d,
     COALESCE(ar.avg_rating_90d, 5.0) AS avg_rating_90d,
+    COALESCE(cpl.profile_completeness_score, 0.0) AS profile_completeness_score,
 
     NULL::NUMERIC(5,4) AS churn_probability,
     NULL::VARCHAR(16) AS risk_level,
@@ -320,6 +354,7 @@ LEFT JOIN cte_phone_changed ph USING (profile_id)
 LEFT JOIN cte_avg_rating ar USING (profile_id)
 LEFT JOIN cte_coupon_dependency cd USING (profile_id)
 LEFT JOIN cte_avg_cart a USING (profile_id)
+LEFT JOIN cte_profile_completeness cpl USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

@@ -149,6 +149,28 @@ cte_engagement AS (
     WHERE event_type = 'page-view'
       AND inserted_at > NOW() - INTERVAL '30 days'
     GROUP BY profile_id
+),
+
+-- 8. message_open_rate_30d: % открытых сообщений
+cte_message_open AS (
+    SELECT
+        profile_id,
+        ROUND(
+            (COUNT(*) FILTER (WHERE event_type = 'message-opened') +
+             COUNT(*) FILTER (
+                WHERE event_type = 'message-status'
+                AND event_data->'event'->'properties'->>'status' = 'clicked'
+             ))::NUMERIC /
+            NULLIF(COUNT(*) FILTER (
+                WHERE event_type = 'message-status'
+                AND event_data->'event'->'properties'->>'status' IN ('delivered', 'clicked')
+            ), 0),
+            4
+        ) AS message_open_rate_30d
+    FROM raw_events
+    WHERE event_type IN ('message-status', 'message-opened')
+      AND inserted_at > NOW() - INTERVAL '30 days'
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -169,6 +191,7 @@ SELECT
 
     -- 4: Маркетинг и коммуникации
     COALESCE(pi.promo_ignore_rate_14d, 0.0) AS promo_ignore_rate_14d,
+    COALESCE(mo.message_open_rate_30d, 0.0) AS message_open_rate_30d,
 
     -- 5: Поведенческие и профильные
     COALESCE(e.session_engagement_score, 0.0) AS session_engagement_score,
@@ -186,6 +209,7 @@ LEFT JOIN cte_frustration f USING (profile_id)
 LEFT JOIN cte_personal_conversion pc USING (profile_id)
 LEFT JOIN cte_promo_ignore pi USING (profile_id)
 LEFT JOIN cte_engagement e USING (profile_id)
+LEFT JOIN cte_message_open mo USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

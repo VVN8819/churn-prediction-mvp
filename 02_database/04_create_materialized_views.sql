@@ -335,6 +335,36 @@ cte_unpublished_review AS (
       AND inserted_at > NOW() - INTERVAL '90 days'
       AND event_data->'event'->'properties'->>'rate' IS NOT NULL
     GROUP BY profile_id
+),
+
+-- cart_to_checkout_ratio: Соотношение суммы корзины к сумме чекаута 19
+cte_cart_checkout_ratio AS (
+    WITH cart AS (
+        SELECT
+            profile_id,
+            session_id,
+            AVG(CAST(event_data->'event'->'properties'->>'total' AS NUMERIC)) AS avg_cart
+        FROM raw_events
+        WHERE event_type = 'cart-changes'
+          AND inserted_at > NOW() - INTERVAL '30 days'
+        GROUP BY profile_id, session_id
+    ),
+    checkout AS (
+        SELECT
+            profile_id,
+            session_id,
+            MAX(CAST(event_data->'event'->'properties'->>'value' AS NUMERIC)) AS chk_val
+        FROM raw_events
+        WHERE event_type = 'checkout-started'
+          AND inserted_at > NOW() - INTERVAL '30 days'
+        GROUP BY profile_id, session_id
+    )
+    SELECT
+        c.profile_id,
+        ROUND(AVG(c.avg_cart / NULLIF(ch.chk_val, 0)), 2) AS cart_to_checkout_ratio
+    FROM cart c
+    JOIN checkout ch USING (profile_id, session_id)
+    GROUP BY c.profile_id
 )
 
 -- 3. Сборка признака
@@ -345,6 +375,7 @@ SELECT
     -- 1: Временные и транзакционные
     COALESCE(d.days_since_last_order, 999) AS days_since_last_order,
     COALESCE(a.avg_cart_value_30d, 0.0) AS avg_cart_value_30d,
+    COALESCE(r.cart_to_checkout_ratio, 1.0) AS cart_to_checkout_ratio,
 
     -- 2: Отказы
     COALESCE(ab.cart_abandonment_rate_30d, 0.0) AS cart_abandonment_rate_30d,
@@ -394,6 +425,7 @@ LEFT JOIN cte_avg_cart a USING (profile_id)
 LEFT JOIN cte_profile_completeness cpl USING (profile_id)
 LEFT JOIN cte_delta_views dv USING (profile_id)
 LEFT JOIN cte_unpublished_review ur USING (profile_id)
+LEFT JOIN cte_cart_checkout_ratio r USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

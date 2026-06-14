@@ -17,7 +17,7 @@ active_profiles AS (
 
 -- 2. Расчёт признака в отдельном CTE
 
--- days_since_last_order: Дней с последнего заказа
+-- days_since_last_order: Дней с последнего заказа 1
 -- считаем по page-view на /order
 cte_days_since_last_order AS (
     SELECT
@@ -30,7 +30,7 @@ cte_days_since_last_order AS (
     GROUP BY profile_id
 ),
 
--- cart_abandonment_rate_30d: % отказов на /checkout
+-- cart_abandonment_rate_30d: % отказов на /checkout 2
 cte_cart_abandonment_rate AS (
     SELECT
         profile_id,
@@ -48,7 +48,7 @@ cte_cart_abandonment_rate AS (
     GROUP BY profile_id
 ),
 
--- checkout_completion_rate: Конверсия оформления заказа (/order)
+-- checkout_completion_rate: Конверсия оформления заказа (/order) 3
 cte_checkout_completion AS (
     SELECT
         profile_id,
@@ -66,7 +66,7 @@ cte_checkout_completion AS (
     GROUP BY profile_id
 ),
 
--- checkout_frustration_index: (удаления на /checkout + низкие рейтинги) / начатые оформления
+-- checkout_frustration_index: (удаления на /checkout + низкие рейтинги) / начатые оформления 4
 cte_frustration AS (
     SELECT 
         profile_id,
@@ -88,7 +88,7 @@ cte_frustration AS (
     GROUP BY profile_id
 ),
 
--- personal_offer_conversion_rate: Конверсия персонального предложения
+-- personal_offer_conversion_rate: Конверсия персонального предложения 5
 -- (увидел personal-view и скопировал copy-promocode)
 cte_personal_conversion AS (
     WITH funnel AS (
@@ -114,7 +114,7 @@ cte_personal_conversion AS (
     GROUP BY profile_id
 ),
 
--- promo_ignore_rate_14d: % игнорирования баннерных акций
+-- promo_ignore_rate_14d: % игнорирования баннерных акций 6
 cte_promo_ignore AS (
     SELECT
         profile_id,
@@ -129,7 +129,7 @@ cte_promo_ignore AS (
     GROUP BY profile_id
 ),
 
--- session_engagement_score: Вовлечённость сессии
+-- session_engagement_score: Вовлечённость сессии 7
 cte_engagement AS (
     SELECT
         profile_id,
@@ -151,7 +151,7 @@ cte_engagement AS (
     GROUP BY profile_id
 ),
 
--- message_open_rate_30d: % открытых сообщений
+-- message_open_rate_30d: % открытых сообщений 8
 cte_message_open AS (
     SELECT
         profile_id,
@@ -173,7 +173,7 @@ cte_message_open AS (
     GROUP BY profile_id
 ),
 
--- cart_browse_abandon_rate_30d: % отказов в каталоге/на главной
+-- cart_browse_abandon_rate_30d: % отказов в каталоге/на главной 9
 cte_browse_abandon AS (
     SELECT
         profile_id,
@@ -192,7 +192,7 @@ cte_browse_abandon AS (
     GROUP BY profile_id
 ),
 
--- personal_views_count_30d: Количество просмотров персонального предложения
+-- personal_views_count_30d: Количество просмотров персонального предложения 10
 cte_personal_views AS (
     SELECT
         profile_id,
@@ -203,7 +203,7 @@ cte_personal_views AS (
     GROUP BY profile_id
 ),
 
--- 11. push_channel_available: Доступен ли push-канал
+-- push_channel_available: Доступен ли push-канал 11
 cte_push_available AS (
     SELECT
         profile_id,
@@ -211,6 +211,24 @@ cte_push_available AS (
     FROM raw_events
     WHERE event_type = 'profile-traits-update'
       AND inserted_at > NOW() - INTERVAL '90 days'
+    GROUP BY profile_id
+),
+
+-- phone_changed_90d: Менялся ли телефон за 90 дней 12
+-- (исключаем identification на /checkout это валидация, не изменение)
+cte_phone_changed AS (
+    SELECT
+        profile_id,
+        CASE WHEN COUNT(DISTINCT COALESCE(
+            event_data->'event'->'properties'->'phone'->>'main',
+            event_data->'event'->'properties'->'contact'->'phone'->>'main'
+        )) > 1 THEN TRUE ELSE FALSE END AS phone_changed_90d
+    FROM raw_events
+    WHERE (
+        event_type IN ('sign-in', 'profile-update')
+        OR (event_type = 'identification' AND event_data->'event'->'context'->'page'->>'path' != '/checkout')
+    )
+    AND inserted_at > NOW() - INTERVAL '90 days'
     GROUP BY profile_id
 )
 
@@ -239,6 +257,7 @@ SELECT
 
     -- 5: Поведенческие и профильные
     COALESCE(e.session_engagement_score, 0.0) AS session_engagement_score,
+    COALESCE(ph.phone_changed_90d, FALSE) AS phone_changed_90d,
 
     NULL::NUMERIC(5,4) AS churn_probability,
     NULL::VARCHAR(16) AS risk_level,
@@ -257,6 +276,7 @@ LEFT JOIN cte_message_open mo USING (profile_id)
 LEFT JOIN cte_browse_abandon ba USING (profile_id)
 LEFT JOIN cte_personal_views pv USING (profile_id)
 LEFT JOIN cte_push_available pa USING (profile_id)
+LEFT JOIN cte_phone_changed ph USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

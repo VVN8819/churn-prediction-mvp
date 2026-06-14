@@ -21,6 +21,7 @@ INSERT INTO ml_features (
     promo_ignore_rate_14d,
     session_engagement_score,
     message_open_rate_30d,
+    cart_browse_abandon_rate_30d,
     churn_probability,
     risk_level,
     computed_at,
@@ -37,6 +38,7 @@ SELECT
     promo_ignore_rate_14d,
     session_engagement_score,
     message_open_rate_30d,
+    cart_browse_abandon_rate_30d,
     churn_probability,
     risk_level,
     computed_at,
@@ -53,6 +55,7 @@ DO UPDATE SET
     promo_ignore_rate_14d = EXCLUDED.promo_ignore_rate_14d,
     session_engagement_score = EXCLUDED.session_engagement_score,
     message_open_rate_30d = EXCLUDED.message_open_rate_30d,
+    cart_browse_abandon_rate_30d = EXCLUDED.cart_browse_abandon_rate_30d,
     computed_at = NOW();
 
 -- 4. Записываем завершение операции в лог

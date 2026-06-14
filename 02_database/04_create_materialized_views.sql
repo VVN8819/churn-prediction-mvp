@@ -64,6 +64,28 @@ cte_checkout_completion AS (
     WHERE event_type IN ('checkout-started', 'page-view')
       AND inserted_at > NOW() - INTERVAL '30 days'
     GROUP BY profile_id
+),
+
+-- checkout_frustration_index: (удаления на /checkout + низкие рейтинги) / начатые оформления
+cte_frustration AS (
+    SELECT 
+        profile_id,
+        ROUND(
+            (COUNT(*) FILTER (
+                WHERE event_type = 'cart-delete' 
+                AND event_data->'event'->'context'->'page'->>'path' = '/checkout'
+            ) +
+            COUNT(*) FILTER (
+                WHERE event_type = 'rating' 
+                AND CAST(event_data->'event'->'properties'->>'rate' AS INTEGER) <= 3
+            ))::NUMERIC / 
+            NULLIF(COUNT(*) FILTER (WHERE event_type IN ('cart-changes', 'checkout-started')), 0),
+            4
+        ) AS checkout_frustration_index
+    FROM raw_events
+    WHERE event_type IN ('cart-changes', 'checkout-started', 'cart-delete', 'rating')
+      AND inserted_at > NOW() - INTERVAL '30 days'
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -77,6 +99,7 @@ SELECT
     -- 2: Отказы
     COALESCE(ab.cart_abandonment_rate_30d, 0.0) AS cart_abandonment_rate_30d,
     COALESCE(cc.checkout_completion_rate, 0.0) AS checkout_completion_rate,
+    COALESCE(f.checkout_frustration_index, 0.0) AS checkout_frustration_index,
 
     NULL::NUMERIC(5,4) AS churn_probability,
     NULL::VARCHAR(16) AS risk_level,
@@ -87,6 +110,7 @@ FROM active_profiles p
 LEFT JOIN cte_days_since_last_order d USING (profile_id)
 LEFT JOIN cte_cart_abandonment_rate ab USING (profile_id)
 LEFT JOIN cte_checkout_completion cc USING (profile_id)
+LEFT JOIN cte_frustration f USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

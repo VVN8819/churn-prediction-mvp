@@ -445,6 +445,25 @@ cte_promo_interest AS (
             4
         ) AS promo_interest_rate
     FROM behavior
+),
+
+-- 23. checkout_value_trend: Линейный тренд суммы заказа за 30 дней
+cte_value_trend AS (
+    SELECT
+        profile_id,
+        ROUND(
+            REGR_SLOPE(
+                CAST(event_data->'event'->'properties'->>'value' AS NUMERIC),
+                EXTRACT(EPOCH FROM inserted_at)
+            )::NUMERIC,
+            4
+        ) AS checkout_value_trend
+    FROM raw_events
+    WHERE event_type = 'checkout-started'
+      AND inserted_at > NOW() - INTERVAL '30 days'
+      AND event_data->'event'->'properties'->>'value' IS NOT NULL
+    GROUP BY profile_id
+    HAVING COUNT(*) >= 2  -- Нужно минимум 2 заказа для расчёта тренда
 )
 
 -- 3. Сборка признака
@@ -456,6 +475,7 @@ SELECT
     COALESCE(d.days_since_last_order, 999) AS days_since_last_order,
     COALESCE(a.avg_cart_value_30d, 0.0) AS avg_cart_value_30d,
     COALESCE(r.cart_to_checkout_ratio, 1.0) AS cart_to_checkout_ratio,
+    COALESCE(t.checkout_value_trend, 0.0) AS checkout_value_trend,
 
     -- 2: Отказы
     COALESCE(ab.cart_abandonment_rate_30d, 0.0) AS cart_abandonment_rate_30d,
@@ -512,6 +532,7 @@ LEFT JOIN cte_cart_checkout_ratio r USING (profile_id)
 LEFT JOIN cte_copy_reaction cr USING (profile_id)
 LEFT JOIN cte_reviews_behavior rb USING (profile_id)
 LEFT JOIN cte_promo_interest pir USING (profile_id)
+LEFT JOIN cte_value_trend t USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

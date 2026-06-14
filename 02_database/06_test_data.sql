@@ -109,10 +109,10 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "profile": {"id": "e9922810-0a85-43c1-8e78-be8343c1f8ed"},
    "session": {"id": "11111111-1111-1111-1111-111111111111"},
    "metadata": {"time": {"insert": "2026-06-08T10:00:00Z"}}}}'::JSONB,
- NOW() - INTERVAL '0 days');
+ NOW() - INTERVAL '0 days'),
 
 -- ======== Персональные предложения, чтение отзывов, push, сообщения ===========
-INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
+-- INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
 -- personal-view в /profile
 ('a1b2c3d4-0001-4000-8000-000000000009', 'personal-view',
  'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
@@ -133,7 +133,7 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "profile": {"id": "e9922810-0a85-43c1-8e78-be8343c1f8ed"},
    "session": {"id": "11111111-1111-1111-1111-111111111111"},
    "metadata": {"time": {"insert": "2026-06-07T10:06:30Z"}}}}'::JSONB,
- NOW() - INTERVAL '1 day'),
+ NOW() - INTERVAL '1 day' + INTERVAL '30 seconds'),
 
 -- page-view /reviews (читает отзывы)
 ('a1b2c3d4-0001-4000-8000-000000000011', 'page-view',
@@ -175,28 +175,6 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "session": {"id": "11111111-1111-1111-1111-111111111111"},
    "metadata": {"time": {"insert": "2026-06-06T12:05:00Z"}}}}'::JSONB,
  NOW() - INTERVAL '2 days');
-
--- Для VVNvvn (реакция 30 секунд)
-INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at) VALUES
-('a1b2c3d4-0001-4000-8000-000000000009', 'personal-view',
- 'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
- '{"event": {"id": "a1b2c3d4-0001-4000-8000-000000000009", "type": "personal-view",
-   "properties": {"id": "941ea088-4074-43a7-a7b9-d53b48d8ab4c"},
-   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/profile", "path": "/profile"}},
-   "profile": {"id": "e9922810-0a85-43c1-8e78-be8343c1f8ed"},
-   "session": {"id": "11111111-1111-1111-1111-111111111111"},
-   "metadata": {"time": {"insert": "2026-06-07T10:06:00Z"}}}}'::JSONB,
- NOW() - INTERVAL '1 day'),
-
-('a1b2c3d4-0001-4000-8000-000000000010', 'copy-promocode',
- 'e9922810-0a85-43c1-8e78-be8343c1f8ed', '11111111-1111-1111-1111-111111111111',
- '{"event": {"id": "a1b2c3d4-0001-4000-8000-000000000010", "type": "copy-promocode",
-   "properties": {"id": "941ea088-4074-43a7-a7b9-d53b48d8ab4c"},
-   "context": {"page": {"url": "https://demo.vsem-edu-oblako.ru/profile", "path": "/profile"}},
-   "profile": {"id": "e9922810-0a85-43c1-8e78-be8343c1f8ed"},
-   "session": {"id": "11111111-1111-1111-1111-111111111111"},
-   "metadata": {"time": {"insert": "2026-06-07T10:06:30Z"}}}}'::JSONB,
- NOW() - INTERVAL '1 day');
 
 
 
@@ -447,7 +425,7 @@ INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data
    "profile": {"id": "99e5b77f-a446-4704-ac87-6595c39d1953"},
    "session": {"id": "44444444-4444-4444-4444-444444444444"},
    "metadata": {"time": {"insert": "2026-06-05T11:55:20Z"}}}}'::JSONB,
- NOW() - INTERVAL '5 days'),
+ NOW() - INTERVAL '5 days'+ INTERVAL '20 seconds'),
 
  -- promotion-close (закрыл другую акцию без клика)
 ('d4e5f6a7-0004-4000-8000-000000000009', 'promotion-close',

@@ -29,6 +29,7 @@ INSERT INTO ml_features (
     coupon_dependency_ratio,
     avg_cart_value_30d,
     profile_completeness_score,
+    delta_page_views_14d,
     churn_probability,
     risk_level,
     computed_at,
@@ -53,6 +54,7 @@ SELECT
     coupon_dependency_ratio,
     avg_cart_value_30d,
     profile_completeness_score,
+    delta_page_views_14d,
     churn_probability,
     risk_level,
     computed_at,
@@ -77,6 +79,7 @@ DO UPDATE SET
     coupon_dependency_ratio = EXCLUDED.coupon_dependency_ratio,
     avg_cart_value_30d = EXCLUDED.avg_cart_value_30d,
     profile_completeness_score = EXCLUDED.profile_completeness_score,
+    delta_page_views_14d = EXCLUDED.delta_page_views_14d,
     computed_at = NOW();
 
 -- 4. Записываем завершение операции в лог

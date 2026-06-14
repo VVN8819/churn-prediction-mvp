@@ -35,6 +35,7 @@ INSERT INTO ml_features (
     avg_copy_reaction_seconds,
     reviews_reading_behavior,
     promo_interest_rate,
+    checkout_value_trend,
     churn_probability,
     risk_level,
     computed_at,
@@ -65,6 +66,7 @@ SELECT
     avg_copy_reaction_seconds,
     reviews_reading_behavior,
     promo_interest_rate,
+    checkout_value_trend,
     churn_probability,
     risk_level,
     computed_at,
@@ -95,6 +97,7 @@ DO UPDATE SET
     avg_copy_reaction_seconds = EXCLUDED.avg_copy_reaction_seconds,
     reviews_reading_behavior = EXCLUDED.reviews_reading_behavior,
     promo_interest_rate = EXCLUDED.promo_interest_rate,
+    checkout_value_trend = EXCLUDED.checkout_value_trend,
     computed_at = NOW();
 
 -- 4. Записываем завершение операции в лог

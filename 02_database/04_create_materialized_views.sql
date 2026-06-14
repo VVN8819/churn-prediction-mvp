@@ -256,6 +256,17 @@ cte_coupon_dependency AS (
     WHERE event_type = 'checkout-started'
       AND inserted_at > NOW() - INTERVAL '90 days'
     GROUP BY profile_id
+),
+
+-- avg_cart_value_30d: Средняя сумма корзины за 30 дней 15
+cte_avg_cart AS (
+    SELECT
+        profile_id,
+        ROUND(AVG(CAST(event_data->'event'->'properties'->>'total' AS NUMERIC)), 2) AS avg_cart_value_30d
+    FROM raw_events
+    WHERE event_type = 'cart-changes'
+      AND inserted_at > NOW() - INTERVAL '30 days'
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -265,6 +276,7 @@ SELECT
 
     -- 1: Временные и транзакционные
     COALESCE(d.days_since_last_order, 999) AS days_since_last_order,
+    COALESCE(a.avg_cart_value_30d, 0.0) AS avg_cart_value_30d,
 
     -- 2: Отказы
     COALESCE(ab.cart_abandonment_rate_30d, 0.0) AS cart_abandonment_rate_30d,
@@ -307,6 +319,7 @@ LEFT JOIN cte_push_available pa USING (profile_id)
 LEFT JOIN cte_phone_changed ph USING (profile_id)
 LEFT JOIN cte_avg_rating ar USING (profile_id)
 LEFT JOIN cte_coupon_dependency cd USING (profile_id)
+LEFT JOIN cte_avg_cart a USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

@@ -241,6 +241,21 @@ cte_avg_rating AS (
     WHERE event_type = 'rating'
       AND inserted_at > NOW() - INTERVAL '90 days'
     GROUP BY profile_id
+),
+
+-- coupon_dependency_ratio: Доля заказов с купоном за 90 дней 14
+cte_coupon_dependency AS (
+    SELECT
+        profile_id,
+        ROUND(
+            COUNT(*) FILTER (WHERE event_data->'event'->'properties'->>'coupon' IS NOT NULL)::NUMERIC /
+            NULLIF(COUNT(*), 0),
+            4
+        ) AS coupon_dependency_ratio
+    FROM raw_events
+    WHERE event_type = 'checkout-started'
+      AND inserted_at > NOW() - INTERVAL '90 days'
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -265,6 +280,7 @@ SELECT
     COALESCE(pi.promo_ignore_rate_14d, 0.0) AS promo_ignore_rate_14d,
     COALESCE(mo.message_open_rate_30d, 0.0) AS message_open_rate_30d,
     COALESCE(pa.push_channel_available, FALSE) AS push_channel_available,
+    COALESCE(cd.coupon_dependency_ratio, 0.0) AS coupon_dependency_ratio,
 
     -- 5: Поведенческие и профильные
     COALESCE(e.session_engagement_score, 0.0) AS session_engagement_score,
@@ -290,6 +306,7 @@ LEFT JOIN cte_personal_views pv USING (profile_id)
 LEFT JOIN cte_push_available pa USING (profile_id)
 LEFT JOIN cte_phone_changed ph USING (profile_id)
 LEFT JOIN cte_avg_rating ar USING (profile_id)
+LEFT JOIN cte_coupon_dependency cd USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

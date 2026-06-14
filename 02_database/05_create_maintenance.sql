@@ -27,6 +27,7 @@ INSERT INTO ml_features (
     phone_changed_90d,
     avg_rating_90d,
     coupon_dependency_ratio,
+    avg_cart_value_30d,
     churn_probability,
     risk_level,
     computed_at,
@@ -49,6 +50,7 @@ SELECT
     phone_changed_90d,
     avg_rating_90d,
     coupon_dependency_ratio,
+    avg_cart_value_30d,
     churn_probability,
     risk_level,
     computed_at,
@@ -71,6 +73,7 @@ DO UPDATE SET
     phone_changed_90d = EXCLUDED.phone_changed_90d,
     avg_rating_90d = EXCLUDED.avg_rating_90d,
     coupon_dependency_ratio = EXCLUDED.coupon_dependency_ratio,
+    avg_cart_value_30d = EXCLUDED.avg_cart_value_30d,
     computed_at = NOW();
 
 -- 4. Записываем завершение операции в лог

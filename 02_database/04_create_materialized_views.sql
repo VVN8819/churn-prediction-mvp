@@ -190,6 +190,17 @@ cte_browse_abandon AS (
     WHERE event_type IN ('cart-delete', 'cart-changes')
       AND inserted_at > NOW() - INTERVAL '30 days'
     GROUP BY profile_id
+),
+
+-- personal_views_count_30d: Количество просмотров персонального предложения
+cte_personal_views AS (
+    SELECT
+        profile_id,
+        COUNT(*) AS personal_views_count_30d
+    FROM raw_events
+    WHERE event_type = 'personal-view'
+      AND inserted_at > NOW() - INTERVAL '30 days'
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -208,6 +219,7 @@ SELECT
 
     -- 3: Персональные предложения
     COALESCE(pc.personal_offer_conversion_rate, 0.0) AS personal_offer_conversion_rate,
+    COALESCE(pv.personal_views_count_30d, 0) AS personal_views_count_30d,
 
     -- 4: Маркетинг и коммуникации
     COALESCE(pi.promo_ignore_rate_14d, 0.0) AS promo_ignore_rate_14d,
@@ -231,6 +243,7 @@ LEFT JOIN cte_promo_ignore pi USING (profile_id)
 LEFT JOIN cte_engagement e USING (profile_id)
 LEFT JOIN cte_message_open mo USING (profile_id)
 LEFT JOIN cte_browse_abandon ba USING (profile_id)
+LEFT JOIN cte_personal_views pv USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

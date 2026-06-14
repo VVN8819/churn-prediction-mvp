@@ -39,11 +39,11 @@ cte_cart_abandonment_rate AS (
                 WHERE event_type = 'cart-delete'
                 AND event_data->'event'->'context'->'page'->>'path' = '/checkout'
             )::NUMERIC /
-            NULLIF(COUNT(*) FILTER (WHERE event_type = 'checkout-started'), 0),
+            NULLIF(COUNT(*) FILTER (WHERE event_type = 'cart-changes'), 0),
             4
         ) AS cart_abandonment_rate_30d
     FROM raw_events
-    WHERE event_type IN ('cart-delete', 'checkout-started')
+    WHERE event_type IN ('cart-delete', 'cart-changes')
       AND inserted_at > NOW() - INTERVAL '30 days'
     GROUP BY profile_id
 )

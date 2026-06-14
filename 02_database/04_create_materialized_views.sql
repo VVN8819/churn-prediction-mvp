@@ -389,6 +389,36 @@ cte_copy_reaction AS (
       AND copied_at IS NOT NULL
       AND copied_at > viewed_at
     GROUP BY profile_id
+),
+
+-- reviews_reading_behavior: Поведенческий паттерн чтения отзывов 21
+cte_reviews_behavior AS (
+    WITH behavior AS (
+        SELECT
+            profile_id,
+            COUNT(*) FILTER (
+                WHERE event_type = 'page-view'
+                AND event_data->'event'->'context'->'page'->>'path' = '/reviews'
+            ) AS read_cnt,
+            COUNT(*) FILTER (WHERE event_type = 'rating') AS written_cnt,
+            COUNT(*) FILTER (
+                WHERE event_type = 'page-view'
+                AND event_data->'event'->'context'->'page'->>'path' = '/order'
+            ) AS order_cnt
+        FROM raw_events
+        WHERE event_type IN ('page-view', 'rating')
+          AND inserted_at > NOW() - INTERVAL '90 days'
+        GROUP BY profile_id
+    )
+    SELECT
+        profile_id,
+        CASE
+            WHEN read_cnt > 2 AND written_cnt = 0 THEN 'researcher'
+            WHEN written_cnt > 0 THEN 'active_reviewer'
+            WHEN read_cnt = 0 AND order_cnt > 0 THEN 'impulsive_buyer'
+            ELSE 'casual_browser'
+        END AS reviews_reading_behavior
+    FROM behavior
 )
 
 -- 3. Сборка признака
@@ -425,6 +455,7 @@ SELECT
     COALESCE(cpl.profile_completeness_score, 0.0) AS profile_completeness_score,
     COALESCE(dv.delta_page_views_14d, 0.0) AS delta_page_views_14d,
     COALESCE(ur.has_unpublished_review, FALSE) AS has_unpublished_review,
+    COALESCE(rb.reviews_reading_behavior, 'casual_browser') AS reviews_reading_behavior,
 
     NULL::NUMERIC(5,4) AS churn_probability,
     NULL::VARCHAR(16) AS risk_level,
@@ -452,6 +483,7 @@ LEFT JOIN cte_delta_views dv USING (profile_id)
 LEFT JOIN cte_unpublished_review ur USING (profile_id)
 LEFT JOIN cte_cart_checkout_ratio r USING (profile_id)
 LEFT JOIN cte_copy_reaction cr USING (profile_id)
+LEFT JOIN cte_reviews_behavior rb USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

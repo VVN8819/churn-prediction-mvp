@@ -33,6 +33,7 @@ INSERT INTO ml_features (
     has_unpublished_review,
     cart_to_checkout_ratio,
     avg_copy_reaction_seconds,
+    reviews_reading_behavior,
     churn_probability,
     risk_level,
     computed_at,
@@ -61,6 +62,7 @@ SELECT
     has_unpublished_review,
     cart_to_checkout_ratio,
     avg_copy_reaction_seconds,
+    reviews_reading_behavior,
     churn_probability,
     risk_level,
     computed_at,
@@ -89,6 +91,7 @@ DO UPDATE SET
     has_unpublished_review = EXCLUDED.has_unpublished_review,
     cart_to_checkout_ratio = EXCLUDED.cart_to_checkout_ratio,
     avg_copy_reaction_seconds = EXCLUDED.avg_copy_reaction_seconds,
+    reviews_reading_behavior = EXCLUDED.reviews_reading_behavior,
     computed_at = NOW();
 
 -- 4. Записываем завершение операции в лог

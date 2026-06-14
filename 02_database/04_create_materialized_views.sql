@@ -127,6 +127,28 @@ cte_promo_ignore AS (
     WHERE event_type IN ('promotion-viewed', 'promotion-close')
       AND inserted_at > NOW() - INTERVAL '14 days'
     GROUP BY profile_id
+),
+
+-- session_engagement_score: Вовлечённость сессии
+cte_engagement AS (
+    SELECT
+        profile_id,
+        ROUND(SUM(
+            CASE
+                WHEN event_data->'event'->'context'->'page'->>'path' = '/' THEN 0.1
+                WHEN event_data->'event'->'context'->'page'->>'path' LIKE '/catalog%' THEN 0.3
+                WHEN event_data->'event'->'context'->'page'->>'path' = '/profile' THEN 0.5
+                WHEN event_data->'event'->'context'->'page'->>'path' = '/actions' THEN 0.5
+                WHEN event_data->'event'->'context'->'page'->>'path' = '/reviews' THEN 0.6
+                WHEN event_data->'event'->'context'->'page'->>'path' = '/checkout' THEN 0.8
+                WHEN event_data->'event'->'context'->'page'->>'path' = '/order' THEN 1.0
+                ELSE 0.0
+            END
+        ), 4) AS session_engagement_score
+    FROM raw_events
+    WHERE event_type = 'page-view'
+      AND inserted_at > NOW() - INTERVAL '30 days'
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -148,6 +170,9 @@ SELECT
     -- 4: Маркетинг и коммуникации
     COALESCE(pi.promo_ignore_rate_14d, 0.0) AS promo_ignore_rate_14d,
 
+    -- 5: Поведенческие и профильные
+    COALESCE(e.session_engagement_score, 0.0) AS session_engagement_score,
+
     NULL::NUMERIC(5,4) AS churn_probability,
     NULL::VARCHAR(16) AS risk_level,
     NOW() AS computed_at,
@@ -160,6 +185,7 @@ LEFT JOIN cte_checkout_completion cc USING (profile_id)
 LEFT JOIN cte_frustration f USING (profile_id)
 LEFT JOIN cte_personal_conversion pc USING (profile_id)
 LEFT JOIN cte_promo_ignore pi USING (profile_id)
+LEFT JOIN cte_engagement e USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

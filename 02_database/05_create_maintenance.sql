@@ -16,6 +16,7 @@ INSERT INTO ml_features (
     days_since_last_order,
     cart_abandonment_rate_30d,
     checkout_completion_rate,
+    checkout_frustration_index,
     churn_probability,
     risk_level,
     computed_at,
@@ -27,6 +28,7 @@ SELECT
     days_since_last_order,
     cart_abandonment_rate_30d,
     checkout_completion_rate,
+    checkout_frustration_index,
     churn_probability,
     risk_level,
     computed_at,
@@ -38,6 +40,7 @@ DO UPDATE SET
     days_since_last_order = EXCLUDED.days_since_last_order,
     cart_abandonment_rate_30d = EXCLUDED.cart_abandonment_rate_30d,
     checkout_completion_rate = EXCLUDED.checkout_completion_rate,
+    checkout_frustration_index = EXCLUDED.checkout_frustration_index,
     computed_at = NOW();
 
 -- 4. Записываем завершение операции в лог

@@ -14,6 +14,7 @@ INSERT INTO ml_features (
     profile_id,
     snapshot_date,
     days_since_last_order,
+    cart_abandonment_rate_30d,
     churn_probability,
     risk_level,
     computed_at,
@@ -23,6 +24,7 @@ SELECT
     profile_id,
     snapshot_date,
     days_since_last_order,
+    cart_abandonment_rate_30d,
     churn_probability,
     risk_level,
     computed_at,
@@ -32,6 +34,7 @@ ON CONFLICT (profile_id)
 DO UPDATE SET
     snapshot_date = EXCLUDED.snapshot_date,
     days_since_last_order = EXCLUDED.days_since_last_order,
+    cart_abandonment_rate_30d = EXCLUDED.cart_abandonment_rate_30d,
     computed_at = NOW();
 
 -- 4. Записываем завершение операции в лог
@@ -45,5 +48,8 @@ SET
 WHERE batch_id = :'v_batch_id';
 
 -- 5. Обновляем статистику для оптимизатора запросов
-ANALYZE ml_features;
-ANALYZE mv_ml_features;
+VACUUM ANALYZE ml_features;
+VACUUM ANALYZE mv_ml_features;
+VACUUM ANALYZE raw_events;
+VACUUM ANALYZE profiles;
+VACUUM ANALYZE events_queue;

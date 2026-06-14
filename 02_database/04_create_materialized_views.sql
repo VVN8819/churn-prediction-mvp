@@ -46,6 +46,24 @@ cte_cart_abandonment_rate AS (
     WHERE event_type IN ('cart-delete', 'cart-changes')
       AND inserted_at > NOW() - INTERVAL '30 days'
     GROUP BY profile_id
+),
+
+-- checkout_completion_rate: Конверсия оформления заказа (/order)
+cte_checkout_completion AS (
+    SELECT
+        profile_id,
+        ROUND(
+            COUNT(*) FILTER (
+                WHERE event_type = 'page-view'
+                AND event_data->'event'->'context'->'page'->>'path' = '/order'
+            )::NUMERIC /
+            NULLIF(COUNT(*) FILTER (WHERE event_type = 'checkout-started'), 0),
+            4
+        ) AS checkout_completion_rate
+    FROM raw_events
+    WHERE event_type IN ('checkout-started', 'page-view')
+      AND inserted_at > NOW() - INTERVAL '30 days'
+    GROUP BY profile_id
 )
 
 -- 3. Сборка признака
@@ -58,6 +76,7 @@ SELECT
 
     -- 2: Отказы
     COALESCE(ab.cart_abandonment_rate_30d, 0.0) AS cart_abandonment_rate_30d,
+    COALESCE(cc.checkout_completion_rate, 0.0) AS checkout_completion_rate,
 
     NULL::NUMERIC(5,4) AS churn_probability,
     NULL::VARCHAR(16) AS risk_level,
@@ -67,6 +86,7 @@ SELECT
 FROM active_profiles p
 LEFT JOIN cte_days_since_last_order d USING (profile_id)
 LEFT JOIN cte_cart_abandonment_rate ab USING (profile_id)
+LEFT JOIN cte_checkout_completion cc USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

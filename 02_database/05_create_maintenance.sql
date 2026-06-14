@@ -23,6 +23,7 @@ INSERT INTO ml_features (
     message_open_rate_30d,
     cart_browse_abandon_rate_30d,
     personal_views_count_30d,
+    push_channel_available,
     churn_probability,
     risk_level,
     computed_at,
@@ -41,6 +42,7 @@ SELECT
     message_open_rate_30d,
     cart_browse_abandon_rate_30d,
     personal_views_count_30d,
+    push_channel_available,
     churn_probability,
     risk_level,
     computed_at,
@@ -59,6 +61,7 @@ DO UPDATE SET
     message_open_rate_30d = EXCLUDED.message_open_rate_30d,
     cart_browse_abandon_rate_30d = EXCLUDED.cart_browse_abandon_rate_30d,
     personal_views_count_30d = EXCLUDED.personal_views_count_30d,
+    push_channel_available = EXCLUDED.push_channel_available,
     computed_at = NOW();
 
 -- 4. Записываем завершение операции в лог

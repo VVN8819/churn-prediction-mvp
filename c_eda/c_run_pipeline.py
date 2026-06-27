@@ -17,6 +17,7 @@ sys.path.insert(0, str(project_root))
 # Импортируем функции из модулей
 from c_eda.ca_load_data import load_save_ml_features
 from c_eda.cb_explore_data import explore_data
+from c_eda.cc_quality_check import run_quality_check
 
 def main():
     """Главная функция"""
@@ -35,6 +36,14 @@ def main():
     
     if result is None:
         print("\nОшибка при анализе данных. Пайплайн остановлен.")
+        sys.exit(1)
+    
+    # Шаг 3: Проверка качества данных
+    print("\nШаг 3: Проверка качества")
+    result = run_quality_check()
+    
+    if result is None:
+        print("\nОшибка при проверке качества. Пайплайн остановлен.")
         sys.exit(1)
     
     print("\nEDA пайплайн завершён")

@@ -102,7 +102,113 @@ def check_accuracy(df):
             
     return problems
         
+# ============ Поиск выбросов методом IQR ==========
+def find_outliers_iqr(df, numerical_cols):
+    """
+    Ищет выбросы методом IQR (Interquartile Range)
     
+    Как работает:
+    - Находим Q1 (25-й процентиль) и Q3 (75-й процентиль)
+    - IQR = Q3 - Q1 (межквартильный размах)
+    - Границы: [Q1 - 1.5*IQR, Q3 + 1.5*IQR]
+    - Всё, что за границами — выбросы
+    """
+    
+    print("\nПоиск выбросов методом IQR")
+    
+    # Исключаем служебные колонки
+    service_cols = ['profile_id', 'snapshot_date', 'computed_at', 
+                    'churn_probability', 'risk_level']
+    feature_cols = [c for c in numerical_cols if c not in service_cols]
+    
+    outliers_summary = {}
+    
+    for col in feature_cols:
+        # Считаем Q1 и Q3
+        Q1 = df[col].quantile(0.25)
+        Q3 = df[col].quantile(0.75)
+        IQR = Q3 - Q1
+        
+        # Считаем границы
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+        
+        # Ищем выбросы
+        outliers = df[(df[col] < lower_bound) | (df[col] > upper_bound)]
+        if len(outliers) > 0:
+            outliers_summary[col] = {
+                'count': len(outliers),
+                'percent': round(len(outliers) / len(df) * 100, 1),
+                'lower': round(lower_bound, 2),
+                'upper': round(upper_bound, 2),
+                'values': outliers[col].tolist()
+            }
+        
+    # Выводим результаты
+    if len(outliers_summary) == 0:
+        print("\nВыбросов не найдено (IQR)!")
+    else:
+        print(f"\nНайдены выбросы в {len(outliers_summary)} признаках (IQR):")
+        for col, info in outliers_summary.items():
+            print(f"\n{col}:")
+            print(f"Количество: {info['count']} ({info['percent']}%)")
+            print(f"Границы: [{info['lower']}, {info['upper']}]")
+            print(f"Значения: {info['values']}")
+    
+    return outliers_summary
+
+# ============= Поиск выбросов методом Z-score =============
+def find_outliers_zscore(df, numerical_cols, threshold=2):
+    """
+    Ищет выбросы методом Z-score
+    
+    Как работает:
+    - Z-score = (значение - среднее) / стандартное отклонение
+    - Если |Z-score| > threshold (обычно 2 или 3) — это выброс
+    """
+    
+    print("\nПоиск выбросов методом Z-score")
+
+    # Исключаем служебные колонки
+    service_cols = ['profile_id', 'snapshot_date', 'computed_at', 
+                    'churn_probability', 'risk_level']
+    feature_cols = [c for c in numerical_cols if c not in service_cols]
+    
+    outliers_summary = {}
+      
+    for col in feature_cols:
+        # Считаем среднее и стандартное отклонение
+        mean = df[col].mean()
+        std = df[col].std()
+        
+        # Пропускаем, если std = 0 (все значения одинаковые)
+        if std == 0:
+            continue
+        
+        # Считаем Z-score для каждого значения
+        z_scores = np.abs((df[col] - mean) / std)
+        
+        # Ищем выбросы
+        outliers = df[z_scores > threshold]
+        
+        if len(outliers) > 0:
+            outliers_summary[col] = {
+                'count': len(outliers),
+                'percent': round(len(outliers) / len(df) * 100, 1),
+                'values': outliers[col].tolist()
+            }
+            
+    # Выводим результаты
+    if len(outliers_summary) == 0:
+        print("\nВыбросов не найдено (Z-score)!")
+    else:
+        print(f"\nНайдены выбросы в {len(outliers_summary)} признаках (Z-score):")
+        for col, info in outliers_summary.items():
+            print(f"\n{col}:")
+            print(f"Количество: {info['count']} ({info['percent']}%)")
+            print(f"Значения: {info['values']}")
+    
+    return outliers_summary
 
 # запускает все проверки качества
 def run_quality_check():
@@ -120,8 +226,8 @@ def run_quality_check():
         
         # Запускаем все проверки
         accuracy_problems = check_accuracy(df)
-        #outliers_iqr = find_outliers_iqr(df, numerical_cols)
-        #outliers_zscore = find_outliers_zscore(df, numerical_cols, threshold=2)
+        outliers_iqr = find_outliers_iqr(df, numerical_cols)
+        outliers_zscore = find_outliers_zscore(df, numerical_cols, threshold=2)
         #consistency_problems = check_consistency(df)
         
         # Итоговый отчёт

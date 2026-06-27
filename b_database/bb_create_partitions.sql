@@ -1,4 +1,4 @@
--- 02_create_partitions.sql
+-- b_database/bb_create_partitions.sql
 -- Партиционирование raw_events по месяцам
 
 CREATE OR REPLACE FUNCTION create_monthly_partition(

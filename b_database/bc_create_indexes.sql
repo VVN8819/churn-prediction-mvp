@@ -1,4 +1,4 @@
--- 03_create_indexes.sql
+-- b_database/bc_create_indexes.sql
 -- индексы для оптимизации производительности
 
 -- events_queue

@@ -1,4 +1,4 @@
--- 04_create_materialized_views.sql
+-- b_database/bd_create_materialized_views.sql
 
 -- Удаляем, если есть
 DROP MATERIALIZED VIEW IF EXISTS mv_ml_features CASCADE;

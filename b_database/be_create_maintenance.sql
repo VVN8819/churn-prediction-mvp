@@ -1,4 +1,4 @@
--- 05_create_maintenance.sql
+-- b_database/be_create_maintenance.sql
 -- 1. Записываем начало операции в лог
 INSERT INTO events_processing_log (batch_id, source, status, started_at)
 VALUES (gen_random_uuid(), 'maintenance', 'running', NOW())

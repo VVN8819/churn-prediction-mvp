@@ -1,3 +1,4 @@
+-- b_database/ba_create_table.sql
 -- Генерация UUID
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 

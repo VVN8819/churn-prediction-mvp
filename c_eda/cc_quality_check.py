@@ -210,6 +210,69 @@ def find_outliers_zscore(df, numerical_cols, threshold=2):
     
     return outliers_summary
 
+# ============= Проверка согласованности (Consistency) =============
+def check_consistency(df):
+    """
+    Проверяет логическую согласованность между признаками
+    
+    Например:
+    - Если days_since_last_order = 999, то checkout_completion_rate должен быть 0
+    - Если personal_views_count_30d = 0, то personal_offer_conversion_rate должен быть 0
+    """
+    
+    print("\nПроверка согласованности (Consistency)")
+    
+    problems = []
+    
+    # 1. Если days_since_last_order = 999, то checkout_completion_rate должен быть 0
+    print("\nПроверка: если days=999, то checkout_completion_rate=0")
+    if "days_since_last_order" in df.columns and "checkout_completion_rate" in df.columns:
+        inconsistent = df[
+            (df["days_since_last_order"] == 999) &
+            (df["checkout_completion_rate"] > 0)
+        ]
+        if len(inconsistent) > 0:
+            problems.append(f"{len(inconsistent)} профилей с days=999 имеют checkout_completion_rate > 0")
+            print(f"Найдено {len(inconsistent)} несоответствий")
+        else:
+            print(f"Всё согласовано")
+    
+    # 2. Если personal_views_count_30d = 0, то personal_offer_conversion_rate должен быть 0
+    print("\nПроверка: если personal_views=0, то conversion_rate=0")
+    if "personal_views_count_30d" in df.columns and "personal_offer_conversion_rate" in df.columns:
+        inconsistent = df[
+            (df["personal_views_count_30d"] == 0) & 
+            (df["personal_offer_conversion_rate"] > 0)
+        ]
+        if len(inconsistent) > 0:
+            problems.append(f"{len(inconsistent)} профилей без views имеют conversion_rate > 0")
+            print(f"Найдено {len(inconsistent)} несоответствий")
+        else:
+            print(f"Всё согласовано")
+            
+    # 3. Если cart_abandonment_rate > 0, то должны быть cart-changes
+    print("\nПроверка: если cart_abandonment_rate > 0, то avg_cart_value > 0")
+    if "cart_abandonment_rate_30d" in df.columns and "avg_cart_value_30d" in df.columns:
+        inconsistent = df[
+            (df["cart_abandonment_rate_30d"] > 0) & 
+            (df["avg_cart_value_30d"] == 0)
+        ]
+        if len(inconsistent) > 0:
+            problems.append(f"{len(inconsistent)} профилей с abandon_rate > 0 имеют avg_cart_value = 0")
+            print(f"Найдено {len(inconsistent)} несоответствий")
+        else:
+            print(f"Всё согласовано")
+            
+    print('\nИтог:')
+    if len(problems) == 0:
+        print('Все проверки согласованности пройдены!')
+    else:
+        print(f'Найдено {len(problems)} проблем:')
+        for problem in problems:
+            print(f'{problem}')
+            
+    return problems
+    
 # запускает все проверки качества
 def run_quality_check():
     """Главная функция: запускает все проверки качества"""
@@ -228,7 +291,7 @@ def run_quality_check():
         accuracy_problems = check_accuracy(df)
         outliers_iqr = find_outliers_iqr(df, numerical_cols)
         outliers_zscore = find_outliers_zscore(df, numerical_cols, threshold=2)
-        #consistency_problems = check_consistency(df)
+        consistency_problems = check_consistency(df)
         
         # Итоговый отчёт
         print(f'\nИтоговый отчёт проверки качества')

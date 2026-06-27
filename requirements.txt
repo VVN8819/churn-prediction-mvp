@@ -3,3 +3,21 @@ psycopg2-binary==2.9.9 # Для работы с PostgreSQL
 elasticsearch==8.11.0 # Для работы с Elasticsearch
 python-dotenv==1.0.0 # Для чтения .env файла
 pandas==2.1.4 # Для работы с данными
+
+# Database
+sqlalchemy==2.0.25 # ORM для работы с БД
+
+# Data manipulation
+numpy==1.26.3 # Числовые операции
+
+# Visualization
+matplotlib==3.8.2 # Графики
+seaborn==0.13.1 # Статистические графики
+plotly==5.18.0 # Интерактивные графики (опционально)
+
+# Data quality
+scipy==1.12.0 # Статистические тесты (Z-score)
+scikit-learn==1.4.0 # ML библиотека (для Later)
+
+# Utilities
+tqdm==4.66.1 # Progress bars

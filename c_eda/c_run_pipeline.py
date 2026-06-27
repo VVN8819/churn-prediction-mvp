@@ -16,6 +16,7 @@ sys.path.insert(0, str(project_root))
 
 # Импортируем функции из модулей
 from c_eda.ca_load_data import load_save_ml_features
+from c_eda.cb_explore_data import explore_data
 
 def main():
     """Главная функция"""
@@ -26,6 +27,14 @@ def main():
     
     if df is None:
         print("\nОшибка при загрузке данных. Пайплайн остановлен.")
+        sys.exit(1)
+    
+    # Шаг 2: Первичный анализ данных
+    print("\nШаг 2: Первичный анализ")
+    result = explore_data()
+    
+    if result is None:
+        print("\nОшибка при анализе данных. Пайплайн остановлен.")
         sys.exit(1)
     
     print("\nEDA пайплайн завершён")

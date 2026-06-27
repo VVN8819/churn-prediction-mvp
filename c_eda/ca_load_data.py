@@ -97,11 +97,28 @@ def save_to_csv(df, filename="df_features_raw.csv"):
     
     return filepath
 
+# ============= Загружает данные из CSV файла ==================
+def load_from_csv(filename="df_features_raw.csv"):
+    """Загружает данные из CSV файла (для использования в других шагах)"""
+    
+    filepath = Path(__file__).parent / "data" / filename
+    
+    if not filepath.exists():
+        raise FileNotFoundError(f'Файл не найден: {filepath}\n')
+    
+    print(f'Загрузка из файла: {filepath.name}')
+    df = pd.read_csv(filepath)
+    
+    print(f"Загружено строк: {len(df)}")
+    print(f"Загружено столбцов: {len(df.columns)}")
+
+    return df
+
 # ============ загрузка и сохранение ==========
 def load_save_ml_features():
     """Главная функция шага 1: загрузка и сохранение"""
     
-    print(f'\nЗагрузка и сохранение из базы')
+    print(f'\n1. Загрузка и сохранение из базы')
     
     try:
         # Загружаем из БД
@@ -112,7 +129,7 @@ def load_save_ml_features():
         
         print(f'\nПервые 5 строк')
         print(df.head(5).to_string())
-        print(f'\nУспешно!')
+        print(f'\nЗагрузка и сохранение из базы. Успешно!')
         
         return df
     

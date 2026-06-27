@@ -60,6 +60,37 @@ def check_accuracy(df):
               print(f"{col}: {len(invalid)} значений вне диапазона")
             else:
                 print(f"{col}: всё в порядке")
+                
+    # 2. Проверяем avg_rating (должен быть от 1 до 5)
+    print("\nПроверка avg_rating_90d (должен быть от 1 до 5):")
+    if "avg_rating_90d" in df.columns:
+            invalid = df[(df["avg_rating_90d"] < 1) | (df["avg_rating_90d"] > 5)]
+            if len(invalid) > 0:
+                problems.append(f"avg_rating_90d: {len(invalid)} значений вне диапазона [1, 5]")
+                print(f"Найдено {len(invalid)} значений вне диапазона")
+            else:
+                print(f"Всё в порядке")
+    
+    # 3. Проверяем days_since_last_order (должен быть >= 0)
+    print("\nПроверка days_since_last_order (должен быть >= 0):")
+    if "days_since_last_order" in df.columns:
+        invalid = df[(df["days_since_last_order"]) < 0]
+        if len(invalid) > 0:
+            problems.append(f"days_since_last_order: {len(invalid)} отрицательных значений")
+            print(f"Найдено {len(invalid)} отрицательных значений")
+        else:
+            print(f"Всё в порядке")
+       
+    # 4. Проверяем reviews_reading_behavior (должен быть из списка)
+    print("\nПроверка reviews_reading_behavior (должен быть из списка):")
+    if "reviews_reading_behavior" in df.columns:
+        valid_values = ['researcher', 'active_reviewer', 'impulsive_buyer', 'casual_browser']
+        invalid = df[~df["reviews_reading_behavior"].isin(valid_values)]
+        if len(invalid) > 0:
+            problems.append(f"reviews_reading_behavior: {len(invalid)} невалидных значений")
+            print(f"Найдено {len(invalid)} невалидных значений")
+        else:
+            print(f"Всё в порядке")
     
     print('\nИтог:')
     if len(problems) == 0:

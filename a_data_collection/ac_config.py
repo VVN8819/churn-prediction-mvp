@@ -78,5 +78,9 @@ EVENT_TYPES = [
     'promotion-close',
     'message-status',
     'message-opened',
-    'rating'
+    'rating',
+    'personal-view',
+    'copy-promocode' 
 ]
+
+

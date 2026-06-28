@@ -43,6 +43,7 @@ temp/
 # Тестовые подключения
 a_data_collection/ad_test_pg_connection.py
 a_data_collection/ae_test_es_connection.py
+a_data_collection/a_run_pipeline.py
 
 # Тестовые данные
 # 02_database/06_test_data.sql

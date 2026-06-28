@@ -52,7 +52,7 @@ def main():
     result = visualize_data()
     
     if result is None:
-        print("\nОшибка при при визуализации. Пайплайн остановлен.")
+        print("\nОшибка при визуализации. Пайплайн остановлен.")
         sys.exit(1)
     
     print("\nEDA пайплайн завершён")

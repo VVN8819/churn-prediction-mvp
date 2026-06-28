@@ -19,6 +19,7 @@ from c_eda.ca_load_data import load_save_ml_features
 from c_eda.cb_explore_data import explore_data
 from c_eda.cc_quality_check import run_quality_check
 from c_eda.cd_visualize import visualize_data
+from c_eda.ce_clean_data import clean_data
 
 def main():
     """Главная функция"""
@@ -54,8 +55,16 @@ def main():
     if result is None:
         print("\nОшибка при визуализации. Пайплайн остановлен.")
         sys.exit(1)
+        
+    # Шаг 5: Очистка данных
+    print("\n----- Шаг 5: Очистка данных -----")
+    result = clean_data()
     
-    print("\nEDA пайплайн завершён")
+    if result is None:
+        print("\nОшибка при очистке данных. Пайплайн остановлен.")
+        sys.exit(1)
+    
+    print("\n----- EDA пайплайн завершён -----")
     
 if __name__ == "__main__":
     main()

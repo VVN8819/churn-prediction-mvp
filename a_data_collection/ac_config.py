@@ -32,29 +32,25 @@ if ssl_root_cert and PG_CONFIG['sslmode'] in ('verify-ca', 'verify-full'):
 # проверка пароля
 required_fields = ["host", "database", "user", "password"]
 for field in required_fields:
-    if not PG_CONFIG["password"]:
+    if not PG_CONFIG.get(field):
         raise ValueError(
-            "PG_PASSWORD не настроен!\n"
-            "1. Скопируйте .env.example в .env\n"
-            "2. Заполните PG_PASSWORD=ваш_пароль\n"
-            "3. Перезапустите приложение"
-    )
+            f"PG_{field.upper()} не настроен!\n"
+            f"1. Скопируйте .env.example в .env\n"
+            f"2. Заполните {field.upper()}\n"
+            f"3. Перезапустите приложение"
+        )
 
 # CDP Elasticsearch
 ES_CONFIG = {
     "host": [os.getenv('ES_HOST', '')],
-    "basic_auth": (
-        os.getenv('ES_USERNAME', 'elastic'),
-        os.getenv('ES_PASSWORD')
-    ),
-    "varify_certs": os.getenv('ES_VERIFY_CERTS', 'true').lower() == 'true'
+    "verify_certs": os.getenv('ES_VERIFY_CERTS', 'false').lower() == 'true'
 }
 
-# проверка пароля
-if not ES_CONFIG["basic_auth"][1]:
+# проверка хоста
+if not ES_CONFIG["host"][0]:
     raise ValueError(
-        "ES_PASSWORD не настроен!\n"
-        "Заполните ES_PASSWORD в файле .env"
+        "ES_HOST не настроен!\n"
+        "Заполните ES_HOST в файле .env"
     )
 
 # сколько событий брать за раз
@@ -62,7 +58,7 @@ BATCH_SIZE=int(os.getenv('BATCH_SIZE', '1000'))
 FETCH_HOURS=int(os.getenv('FETCH_HOURS', '24'))
 ES_INDEX_PATTERN = os.getenv('ES_INDEX_PATTERN', 'events-*')
 
-# 15 событий
+# 17 событий
 EVENT_TYPES = [
     'page-view',
     'profile-traits-update',

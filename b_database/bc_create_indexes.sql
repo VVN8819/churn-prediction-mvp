@@ -1,11 +1,20 @@
 -- b_database/bc_create_indexes.sql
 -- индексы для оптимизации производительности
 
+-- UNIQUE индекс на event_id - защита от дубликатов при ON CONFLICT DO NOTHING
+-- ВАЖНО: заменяем обычный индекс на UNIQUE
+DROP INDEX IF EXISTS idx_queue_event_id;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_queue_event_id ON events_queue (event_id);
+
 -- events_queue
 CREATE INDEX IF NOT EXISTS idx_queue_status ON events_queue (status);
 CREATE INDEX IF NOT EXISTS idx_queue_event_type ON events_queue (event_type);
-CREATE INDEX IF NOT EXISTS idx_queue_event_id ON events_queue (event_id);
 CREATE INDEX IF NOT EXISTS idx_queue_pending_time ON events_queue (status, created_at) WHERE status = 'pending';
+
+-- Составной индекс для быстрой очистки старых обработанных событий (> 6 месяцев)
+CREATE INDEX IF NOT EXISTS idx_queue_processed_cleanup 
+ON events_queue (processed_at) 
+WHERE status = 'processed';
 
 -- raw_events (базовые + композитные + GIN + специфичные)
 CREATE INDEX IF NOT EXISTS idx_raw_profile_time ON raw_events (profile_id, inserted_at DESC) WHERE profile_id IS NOT NULL;

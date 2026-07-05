@@ -54,7 +54,7 @@ if not ES_CONFIG["host"][0]:
     )
 
 # сколько событий брать за раз
-BATCH_SIZE=int(os.getenv('BATCH_SIZE', '1000'))
+BATCH_SIZE=int(os.getenv('BATCH_SIZE', '5000'))
 FETCH_HOURS=int(os.getenv('FETCH_HOURS', '24'))
 ES_INDEX_PATTERN = os.getenv('ES_INDEX_PATTERN', 'events-*')
 

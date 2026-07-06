@@ -17,6 +17,8 @@ ON events_queue (processed_at)
 WHERE status = 'processed';
 
 -- raw_events (базовые + композитные + GIN + специфичные)
+-- Добавляем UNIQUE индекс на raw_events
+CREATE UNIQUE INDEX IF NOT EXISTS idx_raw_event_id_unique ON raw_events (event_id, inserted_at);
 CREATE INDEX IF NOT EXISTS idx_raw_profile_time ON raw_events (profile_id, inserted_at DESC) WHERE profile_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_raw_type_time ON raw_events (event_type, inserted_at DESC);
 CREATE INDEX IF NOT EXISTS idx_raw_type_profile_time ON raw_events (event_type, profile_id, inserted_at DESC) WHERE profile_id IS NOT NULL;

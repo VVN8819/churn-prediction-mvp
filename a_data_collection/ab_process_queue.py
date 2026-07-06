@@ -91,7 +91,6 @@ def insert_to_raw_events(conn, events):
         insert_query = """
             INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at)
             VALUES %s
-            ON CONFLICT (event_id) DO NOTHING
         """
         
         # Подготавливаем данные: пропускаем id из events_queue

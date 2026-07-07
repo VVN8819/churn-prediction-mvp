@@ -52,7 +52,7 @@ COMMENT ON TABLE raw_events IS 'Основное хранилище сырых �
 
 CREATE TABLE IF NOT EXISTS profiles (
     profile_id UUID PRIMARY KEY,
-    phone VARCHAR(20),
+    phone VARCHAR(50),
     firstname VARCHAR(128),
     birthday DATE,
     created_at TIMESTAMPTZ DEFAULT NOW(),

@@ -74,12 +74,12 @@ CREATE TABLE IF NOT EXISTS ml_features (
     days_since_last_order INTEGER,
     checkout_value_trend NUMERIC(10,4),
     avg_cart_value_30d NUMERIC(10,2),
-    cart_to_checkout_ratio NUMERIC(5,2),
+    cart_to_checkout_ratio NUMERIC(10,4),
 
-    cart_abandonment_rate_30d NUMERIC(5,4),
-    cart_browse_abandon_rate_30d NUMERIC(5,4),
-    checkout_frustration_index NUMERIC(5,4),
-    checkout_completion_rate NUMERIC(5,4),
+    cart_abandonment_rate_30d NUMERIC(10,4),
+    cart_browse_abandon_rate_30d NUMERIC(10,4),
+    checkout_frustration_index NUMERIC(10,4),
+    checkout_completion_rate NUMERIC(10,4),
     auth_on_checkout_flag BOOLEAN,
 
     coupon_dependency_ratio NUMERIC(5,4),
@@ -92,8 +92,8 @@ CREATE TABLE IF NOT EXISTS ml_features (
     personal_views_count_30d INTEGER DEFAULT 0,
     avg_copy_reaction_seconds NUMERIC(8,2),
     
-    session_engagement_score NUMERIC(5,4),
-    delta_page_views_14d NUMERIC(7,4),
+    session_engagement_score NUMERIC(10,4),
+    delta_page_views_14d NUMERIC(10,4),
     phone_changed_90d BOOLEAN,
     profile_completeness_score NUMERIC(5,4),
     avg_rating_90d NUMERIC(3,2),

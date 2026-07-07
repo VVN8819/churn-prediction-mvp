@@ -139,22 +139,86 @@ def extract_profile_data(event_data):
     traits = profile.get('traits', {})
     properties = event.get('properties', {})
     
+    def extract_string(value):
+        """
+        Извлекает строковое значение из различных форматов
+        
+        Примеры:
+        - "+79991234567" - "+79991234567"
+        - {"value": "+79991234567"} - "+79991234567"
+        - {"first": "Иван", "last": "Иванов"} - "Иван Иванов"
+        - None - None
+        """
+        if value is None:
+            return None
+        
+        # Если это строка — возвращаем как есть
+        if isinstance(value, str):
+            return value.strip() if value.strip() else None
+        
+        # Если это словарь — пытаемся извлечь значение
+        if isinstance(value, dict):
+            # Пробуем разные ключи
+            for key in ['value', 'text', 'name', 'first', 'last']:
+                if key in value:
+                    val = value[key]
+                    if isinstance(val, str) and val.strip():
+                        return val.strip()
+            
+            # Если есть first и last — объединяем
+            if 'first' in value and 'last' in value:
+                first = value.get('first', '')
+                last = value.get('last', '')
+                if first or last:
+                    return f"{first} {last}".strip()
+            
+            # Если ничего не нашли — преобразуем в строку
+            return str(value)
+        
+        # Если это число или другой тип — преобразуем в строку
+        return str(value) if value else None
+    
+    def normalize_phone(phone):
+        """
+        Нормализует номер телефона: убирает префиксы, пробелы, скобки
+        
+        Примеры:
+        - "tel:+79991234567" → "+79991234567"
+        - "+7 (999) 123-45-67" → "+79991234567"
+        - "89991234567" → "89991234567"
+        """
+        if not phone:
+            return None
+        
+        # Убираем префиксы tel:, tel=, phone:
+        phone = phone.lower()
+        for prefix in ['tel:', 'tel=', 'phone:', 'phone=']:
+            if phone.startswith(prefix):
+                phone = phone[len(prefix):]
+        
+        # Убираем пробелы, скобки, дефисы
+        phone = phone.replace(' ', '').replace('(', '').replace(')', '').replace('-', '')
+        
+        # Ограничиваем длину до 50 символов
+        return phone[:50] if phone else None
+    
     # Извлекаем поля (пробуем разные пути)
-    phone = (
-        traits.get('phone') or 
-        properties.get('phone') or 
-        profile.get('phone')
+    phone = normalize_phone(
+        extract_string(traits.get('phone')) or 
+        extract_string(properties.get('phone')) or 
+        extract_string(profile.get('phone'))
     )
     
-    firstname = (
+    firstname = extract_string(
         traits.get('firstname') or 
         traits.get('firstName') or
         traits.get('first_name') or
+        traits.get('name') or
         properties.get('firstname') or
         properties.get('firstName')
     )
     
-    birthday = (
+    birthday = extract_string(
         traits.get('birthday') or 
         traits.get('birthDate') or
         traits.get('birth_date') or

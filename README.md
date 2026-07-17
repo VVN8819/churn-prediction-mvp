@@ -55,7 +55,20 @@ churn-prediction-mvp/
         ce_clean_data.py - Шаг 5: Очистка (логарифмирование + encoding)
     
     d_ml_model/ - Шаг 4: ML модель (потом)
-        train_model.py - Обучение модели
+        __init__.py - (пустой, для импортов)
+        train_model.py - Обучение и оценка моделей
+        run_pipeline.py - Запуск пайплайна (выбор модели)
+        models/
+            logistic_regression_model.joblib - модель + scaler (со сжатием)
+            logistic_regression_metrics.txt - метрики
+            random_forest_model.joblib
+            random_forest_metrics.txt
+            gradient_boosting_model.joblib
+            gradient_boosting_metrics.txt
+        predictions/
+            logistic_regression_predictions.csv
+            random_forest_predictions.csv
+            gradient_boosting_predictions.csv
     
     05_dashboard/ - Шаг 5: Дашборд (потом)
         metabase_queries.sql - Запросы для Metabase

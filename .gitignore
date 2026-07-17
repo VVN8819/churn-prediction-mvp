@@ -54,3 +54,6 @@ a_data_collection/aa_fetch_from_cdp.py
 
 # EDA
 c_eda/
+
+# ML training
+d_ml_model/

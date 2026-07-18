@@ -56,8 +56,15 @@ churn-prediction-mvp/
     
     d_ml_model/ - Шаг 4: ML модель (потом)
         __init__.py - (пустой, для импортов)
-        train_model.py - Обучение и оценка моделей
-        run_pipeline.py - Запуск пайплайна (выбор модели)
+        d_run_pipeline.py - Запуск пайплайна (выбор модели)
+        da_train_model.py - Шаги 1-7 (общие для всех моделей)
+        db_class_data_preprocessor.py - Класс DataPreprocessor для обучения моделей
+        dc_logistic_regression.py - Шаг 8-9 для Logistic Regression (НОВЫЙ)
+        dd_random_forest.py - 
+        de_gradient_boosting.py -
+        df_compare_models.py -
+        cache/ - Опционально
+            prepared_data.joblib
         models/
             logistic_regression_model.joblib - модель + scaler (со сжатием)
             logistic_regression_metrics.txt - метрики

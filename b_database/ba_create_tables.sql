@@ -100,6 +100,8 @@ CREATE TABLE IF NOT EXISTS ml_features (
     has_unpublished_review BOOLEAN,
     reviews_reading_behavior VARCHAR(32),
 
+    is_churned BOOLEAN DEFAULT FALSE,
+
     churn_probability NUMERIC(5,4),
     risk_level VARCHAR(16),
     computed_at TIMESTAMPTZ DEFAULT NOW(),

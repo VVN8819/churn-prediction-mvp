@@ -6,13 +6,13 @@ DROP MATERIALIZED VIEW IF EXISTS mv_ml_features CASCADE;
 -- Создаём новое materialized_view
 CREATE MATERIALIZED VIEW mv_ml_features AS
 
--- 1. список профилей у кого были события за последние 90 дней
+-- 1. список профилей у кого были события за последние 180 дней
 WITH
 active_profiles AS (
     SELECT DISTINCT profile_id
     FROM raw_events
     WHERE profile_id IS NOT NULL
-      AND inserted_at > NOW() - INTERVAL '90 days'
+      AND inserted_at > NOW() - INTERVAL '180 days'
 ),
 
 -- 2. Расчёт признака в отдельном CTE
@@ -26,7 +26,7 @@ cte_days_since_last_order AS (
     FROM raw_events
     WHERE event_type = 'page-view'
       AND event_data->'event'->'context'->'page'->>'path' = '/order'
-      AND inserted_at > NOW() - INTERVAL '90 days'
+      AND inserted_at > NOW() - INTERVAL '180 days'
     GROUP BY profile_id
 ),
 
@@ -210,7 +210,7 @@ cte_push_available AS (
         BOOL_OR(event_data->'event'->'properties'->>'push_id' IS NOT NULL) AS push_channel_available
     FROM raw_events
     WHERE event_type = 'profile-traits-update'
-      AND inserted_at > NOW() - INTERVAL '90 days'
+      AND inserted_at > NOW() - INTERVAL '180 days'
     GROUP BY profile_id
 ),
 
@@ -407,7 +407,7 @@ cte_reviews_behavior AS (
             ) AS order_cnt
         FROM raw_events
         WHERE event_type IN ('page-view', 'rating')
-          AND inserted_at > NOW() - INTERVAL '90 days'
+          AND inserted_at > NOW() - INTERVAL '180 days'
         GROUP BY profile_id
     )
     SELECT
@@ -478,6 +478,21 @@ cte_auth_flag AS (
     WHERE event_type = 'page-view'
       AND inserted_at > NOW() - INTERVAL '30 days'
     GROUP BY profile_id
+),
+
+-- Целевая переменная is_churned
+-- Если клиент делал заказы (days < 900) и не заказывал 60+ дней - churn = 1
+cte_churn_label AS (
+    SELECT
+        profile_id,
+        CASE
+            WHEN d.days_since_last_order IS NOT NULL
+                 AND d.days_since_last_order > 60
+            THEN TRUE
+            ELSE FALSE
+        END AS is_churned
+    FROM active_profiles p
+    LEFT JOIN cte_days_since_last_order d USING (profile_id)
 )
 
 -- 3. Сборка признака
@@ -519,6 +534,9 @@ SELECT
     COALESCE(ur.has_unpublished_review, FALSE) AS has_unpublished_review,
     COALESCE(rb.reviews_reading_behavior, 'casual_browser') AS reviews_reading_behavior,
 
+    -- Целевая переменная
+    cl.is_churned,
+
     NULL::NUMERIC(5,4) AS churn_probability,
     NULL::VARCHAR(16) AS risk_level,
     NOW() AS computed_at,
@@ -549,6 +567,7 @@ LEFT JOIN cte_reviews_behavior rb USING (profile_id)
 LEFT JOIN cte_promo_interest pir USING (profile_id)
 LEFT JOIN cte_value_trend t USING (profile_id)
 LEFT JOIN cte_auth_flag af USING (profile_id)
+LEFT JOIN cte_churn_label cl USING (profile_id)
 ORDER BY p.profile_id;
 
 -- Индексы для быстрого доступа idx_mv_

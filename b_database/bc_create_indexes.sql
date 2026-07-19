@@ -39,6 +39,9 @@ CREATE INDEX IF NOT EXISTS idx_features_churn_desc ON ml_features (churn_probabi
 CREATE INDEX IF NOT EXISTS idx_features_cart_value ON ml_features (avg_cart_value_30d DESC) WHERE avg_cart_value_30d IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_features_cart_ratio ON ml_features (cart_to_checkout_ratio) WHERE cart_to_checkout_ratio IS NOT NULL;
 
+-- Индекс для быстрой фильтрации ушедших клиентов
+CREATE INDEX IF NOT EXISTS idx_features_is_churned ON ml_features (is_churned) WHERE is_churned = TRUE;
+
 -- events_processing_log
 CREATE INDEX IF NOT EXISTS idx_log_batch ON events_processing_log (batch_id);
 CREATE INDEX IF NOT EXISTS idx_log_status ON events_processing_log (status);

@@ -114,6 +114,21 @@ def load_from_csv(filename="df_features_raw.csv"):
 
     return df
 
+# Удаляет пользователей, которые никогда не делали заказы
+def filter_never_ordered_users(df):
+    """Удаляет пользователей, которые никогда не делали заказы (days = 999)"""
+    print("\nУдаление пользователей без истории заказы")
+    initial_len = len(df)
+    
+    # Оставляем только тех, кто делал заказы (days < 900)
+    df_filtered = df[df['days_since_last_order'] < 900].copy()
+    
+    print(f"- Было строк: {initial_len:,}")
+    print(f"- Стало строк: {len(df_filtered):,}")
+    print(f"- Удалено 'холодных' профилей: {initial_len - len(df_filtered):,} ({(initial_len - len(df_filtered))/initial_len*100:.1f}%)")
+    
+    return df_filtered
+
 # ============ загрузка и сохранение ==========
 def load_save_ml_features():
     """Главная функция шага 1: загрузка и сохранение"""
@@ -123,6 +138,8 @@ def load_save_ml_features():
     try:
         # Загружаем из БД
         df = load_ml_features()
+        
+        df = filter_never_ordered_users(df)
         
         # Сохраняем в CSV
         filepath = save_to_csv(df, "df_features_raw.csv")

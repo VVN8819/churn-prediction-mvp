@@ -162,6 +162,15 @@ def explore_data():
         show_duplicates(df)
         show_statistics(df, numerical_cols)
         show_categorical_distributions(df, categorical_cols)
+
+        print("\nРаспределение целевой переменной (is_churned)")
+        if 'is_churned' in df.columns:
+            churn_counts = df['is_churned'].value_counts()
+            churn_pct = df['is_churned'].value_counts(normalize=True) * 100
+            print(f"- Активные клиенты (is_churned=False): {churn_counts.get(False, 0):,} ({churn_pct.get(False, 0):.1f}%)")
+            print(f"- Ушедшие клиенты  (is_churned=True):  {churn_counts.get(True, 0):,} ({churn_pct.get(True, 0):.1f}%)")
+        else:
+            print("\nКолонка 'is_churned' не найдена в данных!")
         
         print(f'\nПервичный анализ данных из CSV. Успешно!')
         

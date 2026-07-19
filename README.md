@@ -55,27 +55,30 @@ churn-prediction-mvp/
         ce_clean_data.py - Шаг 5: Очистка (логарифмирование + encoding) и сохранение в df_features_clean.csv
     
     d_ml_model/ - Шаг 4: ML модель
+        cache/
+            prepared_data.joblib - файл для ускорения обучение каждой модели 
         plots/
             01_feature_correlation_with_churn.png - визуализация корреляции признаков с целевой переменной
         __init__.py - (пустой, для импортов)
+        d_run_pipeline_class.py - Запуск пайплайна предобработки через class db_class_data_preprocessor.py
         d_run_pipeline.py - Запуск пайплайна предобработки da_pretrain_data_prep.py
         da_pretrain_data_prep.py - Шаги 1-7 (общие для всех моделей): 1. Загрузка очищенных данных из df_features_clean.csv. 2. Автоматический перевод bool в int (0/1). 3. Определение целевой переменной churn. 4. Анализ корреляции признаков с целевой переменной и сохранение в 01_feature_correlation_with_churn.png. 5. Подготовка признаков (разделение на X и y). 6. Разделение на train/test. 7. Масштабирование признаков (StandardScaler).
         db_class_data_preprocessor.py - Класс DataPreprocessor для обучения моделей в dc_logistic_regression, dd_random_forest и de_gradient_boosting с опциональным кешированием в prepared_data.joblib
-        dc_logistic_regression.py - обучение Logistic Regression (НЕ ГОТОВО)
+        dc_logistic_regression.py - обучение Logistic Regression
         dd_random_forest.py - обучение Random Forest (НЕ ГОТОВО)
         de_gradient_boosting.py - обучение Gradient Boosting (НЕ ГОТОВО)
         df_compare_models.py - сравнение трех моделей (НЕ ГОТОВО)
         cache/ - Опционально
             prepared_data.joblib - кеширование предобработанных данных для моделей
         models/
-            logistic_regression_model.joblib - модель + scaler (со сжатием) (НЕ ГОТОВО)
-            logistic_regression_metrics.txt - метрики (НЕ ГОТОВО)
+            logistic_regression_model.joblib - модель + scaler (со сжатием)
+            logistic_regression_metrics.txt - метрики
             random_forest_model.joblib - модель (НЕ ГОТОВО)
             random_forest_metrics.txt - метрики (НЕ ГОТОВО)
             gradient_boosting_model.joblib - модель (НЕ ГОТОВО)
             gradient_boosting_metrics.txt - метрики (НЕ ГОТОВО)
         predictions/ (НЕ ГОТОВО)
-            logistic_regression_predictions.csv (НЕ ГОТОВО)
+            logistic_regression_predictions.csv
             random_forest_predictions.csv (НЕ ГОТОВО)
             gradient_boosting_predictions.csv (НЕ ГОТОВО)
     

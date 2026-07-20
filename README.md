@@ -14,7 +14,7 @@
 Сложное поведение гостей
 
 **Что есть на начальном этапе:**
-- CDP Elasticsearch - собирает события от сайта и приложения по JS трекеру (17 событий выбрал: page-view, profile-traits-update, identification, product-details-page-view, cart-changes, checkout-started, cart-delete, sign-in, profile-update, promotion-viewed, promotion-clicked,promotion-close, message-status, message-opened, rating).
+- CDP Elasticsearch - собирает события от сайта и приложения по JS трекеру (17 событий выбрал: page-view, profile-traits-update, identification, product-details-page-view, cart-changes, checkout-started, cart-delete, sign-in, profile-update, promotion-viewed, promotion-clicked,promotion-close, message-status, message-opened, rating, personal-view, copy-promocode).
 - Платформа по рассылкам - пуш в приложении, Мах, Телега, Баннеры в приложении и сайте.
 
 # Структура

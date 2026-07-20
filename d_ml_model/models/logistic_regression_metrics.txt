@@ -1,0 +1,6 @@
+Logistic Regression Model Metrics
+Accuracy:  0.8021
+Precision: 0.7332
+Recall:    0.9741
+F1-Score:  0.8366
+ROC-AUC:   0.8274

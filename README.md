@@ -91,3 +91,31 @@ churn-prediction-mvp/
     .gitignore - Игнорировать секреты
     README.md - Инструкция для команды
     SECURITY.md - Инструкция по безопасности
+
+# Признаки для моделей:
+
+1. days_since_last_order: Дней с последнего заказа
+2. cart_abandonment_rate_30d: % отказов на /checkout
+3. checkout_completion_rate: Конверсия оформления заказа (/order)
+4. checkout_frustration_index: (удаления на /checkout + низкие рейтинги) / начатые оформления
+5. personal_offer_conversion_rate: Конверсия персонального предложения (увидел personal-view и скопировал copy-promocode)
+6. promo_ignore_rate_14d: % игнорирования баннерных акций
+7. session_engagement_score: Вовлечённость сессии
+8. message_open_rate_30d: % открытых сообщений
+9. cart_browse_abandon_rate_30d: % отказов в каталоге/на главной
+10. personal_views_count_30d: Количество просмотров персонального предложения
+11. push_channel_available: Доступен ли push-канал
+12. phone_changed_90d: Менялся ли телефон за 90 дней (исключаем identification на /checkout это валидация, не изменение)
+13. avg_rating_90d: Средняя оценка за 90 дней
+14. coupon_dependency_ratio: Доля заказов с купоном за 90 дней
+15. avg_cart_value_30d: Средняя сумма корзины за 30 дней
+16. profile_completeness_score: Заполненность профиля (телефон 0.4 + имя 0.3 + день рождения 0.3)
+17. delta_page_views_14d: Дельта просмотров (последние 14 дней vs предыдущие 14)
+18. has_unpublished_review: Есть ли негативный отзыв за 90 дней
+19. cart_to_checkout_ratio: Соотношение суммы корзины к сумме чекаута
+20. avg_copy_reaction_seconds: Среднее время реакции на копирование промокода
+21. reviews_reading_behavior: Поведенческий паттерн чтения отзывов
+22. promo_interest_rate: Комбинированный интерес к акциям
+23. checkout_value_trend: Линейный тренд суммы заказа за 30 дней
+24. auth_on_checkout_flag: Флаг неавторизованного посещения чекаута
+25. Целевая переменная is_churned - Если клиент делал заказы (days < 900) и не заказывал 60+ дней - churn = 1

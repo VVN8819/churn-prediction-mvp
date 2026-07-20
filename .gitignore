@@ -45,15 +45,17 @@ a_data_collection/ad_test_pg_connection.py
 a_data_collection/ae_test_es_connection.py
 
 # Реальные данные
-a_data_collection/a_run_pipeline.py
-a_data_collection/aa_fetch_from_cdp.py
+# a_data_collection/a_run_pipeline.py
+# a_data_collection/aa_fetch_from_cdp.py
 
 # Тестовые данные
 # b_database/bf_test_data.sql
 # bg_test_data_testing.sql
 
 # EDA
-c_eda/
+# c_eda/
 
 # ML training
-d_ml_model/
+# d_ml_model/
+d_ml_model/d_run_pipeline.py
+d_ml_model/da_pretrain_data_prep.py

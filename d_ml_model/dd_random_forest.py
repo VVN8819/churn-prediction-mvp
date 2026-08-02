@@ -113,6 +113,11 @@ def train_and_evaluate():
     cm_path = PLOTS_DIR / "04_confusion_matrix_rf.png"
     plt.savefig(cm_path, dpi=150, bbox_inches='tight')
     plt.close()
+    
+    print("\nConfusion Matrix Random Forest:")
+    print(cm)
+    print(f"\nTN={cm[0,0]} (верно: 'Останется'), FP={cm[0,1]} (ошибка: сказал 'Уйдет', но остался)")
+    print(f"FN={cm[1,0]} (ошибка: сказал 'Останется', но ушел), TP={cm[1,1]} (верно: 'Уйдет')")    
     print(f"\n Confusion Matrix сохранен: {cm_path}")
     
     # 6. Анализ важности признаков (коэффициенты модели)

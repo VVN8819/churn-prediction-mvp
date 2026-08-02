@@ -164,7 +164,7 @@ def train_and_evaluate():
     print(f"- Scaler сохранен: {scaler_path}")
     
     # Сохраняем важность признаков в CSV
-    fi_csv_path = MODELS_DIR / "feature_importance.csv"
+    fi_csv_path = MODELS_DIR / "logreg_feature_importance.csv"
     feature_importance.to_csv(fi_csv_path, index=False)
     print(f"- Важность признаков сохранена: {fi_csv_path}")
     

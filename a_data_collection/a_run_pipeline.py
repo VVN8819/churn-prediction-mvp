@@ -3,6 +3,11 @@
 a_run_pipeline.py
 Главный файл запуска CDP pipeline
 
+Что делает:
+Шаг 1: Тест подключения к Elasticsearch CDP
+Шаг 2: Получение событий из ES и перемещение в events_queue
+Шаг 3: Обработка events_queue, перемещение в raw_events + profiles
+
 Использование:
     python a_run_pipeline.py  # Запустить все шаги
     python a_run_pipeline.py --skip-test                          # Без теста ES

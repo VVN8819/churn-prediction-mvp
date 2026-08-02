@@ -1,4 +1,5 @@
 -- b_database/bd_create_materialized_views.sql
+-- создание агрегированных признаков 24 шт + целевая переменная is_churned
 
 -- Удаляем, если есть
 DROP MATERIALIZED VIEW IF EXISTS mv_ml_features CASCADE;

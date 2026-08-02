@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import time
 from pathlib import Path
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -61,9 +62,30 @@ def train_and_evaluate():
     )
     model.fit(X_train, y_train)
     
+    # Замер времени инференса
+    print("\n Замер времени инференса:")
+    inference_start = time.perf_counter()
+    
     # 3. Предсказания
     y_pred = model.predict(X_test)
     y_pred_proba = model.predict_proba(X_test)[:, 1]
+    
+    inference_end = time.perf_counter()
+    
+    # Расчет времени инференса
+    total_inference_time_ms = (inference_end - inference_start) * 1000
+    avg_inference_time_per_client_ms = total_inference_time_ms / len(X_test)
+    
+    print(f"   - Общее время инференса на {len(X_test)} клиентов: {total_inference_time_ms:.2f} ms")
+    print(f"   - Среднее время на 1 клиента: {avg_inference_time_per_client_ms:.4f} ms")
+    
+    # Проверка требования < 100ms
+    if avg_inference_time_per_client_ms < 100:
+        print(f"   - Требование выполнено: {avg_inference_time_per_client_ms:.4f} ms < 100 ms")
+        inference_requirement_met = True
+    else:
+        print(f"   - Требование НЕ выполнено!: {avg_inference_time_per_client_ms:.4f} ms > 100 ms")
+        inference_requirement_met = False
     
     # 4. Расчет метрик
     print("\nМетрики модели (X_test):")
@@ -155,6 +177,10 @@ def train_and_evaluate():
         f.write(f"Recall:    {recall_score(y_test, y_pred):.4f}\n")
         f.write(f"F1-Score:  {f1_score(y_test, y_pred):.4f}\n")
         f.write(f"ROC-AUC:   {roc_auc_score(y_test, y_pred_proba):.4f}\n")
+        f.write("\nВремя инференса:\n")
+        f.write(f"Общее время инференса: {total_inference_time_ms:.2f} ms\n")
+        f.write(f"Среднее время инференса на гостя: {avg_inference_time_per_client_ms:.4f} ms\n")
+        f.write(f"Требования ко времени инференса (< 100ms): {'Требование выполнено!' if inference_requirement_met else 'Требование НЕ выполнено!'}\n")
     print(f"- Метрики сохранены: {metrics_path}")
     
     print("\nОбучение Logistic Regression завершено УСПЕШНО!")

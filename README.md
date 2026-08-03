@@ -56,7 +56,7 @@ churn-prediction-mvp/
     
     d_ml_model/ - Шаг 4: ML модель
         cache/
-            prepared_data.joblib - файл для ускорения обучение каждой модели 
+            prepared_data.joblib - файл для ускорения обучение каждой модели, кеширование предобработанных данных для моделей
         plots/
             01_feature_correlation_with_churn.png - визуализация корреляции признаков с целевой переменной
         __init__.py - (пустой, для импортов)
@@ -65,11 +65,10 @@ churn-prediction-mvp/
         da_pretrain_data_prep.py - Шаги 1-7 (общие для всех моделей): 1. Загрузка очищенных данных из df_features_clean.csv. 2. Автоматический перевод bool в int (0/1). 3. Определение целевой переменной churn. 4. Анализ корреляции признаков с целевой переменной и сохранение в 01_feature_correlation_with_churn.png. 5. Подготовка признаков (разделение на X и y). 6. Разделение на train/test. 7. Масштабирование признаков (StandardScaler).
         db_class_data_preprocessor.py - Класс DataPreprocessor для обучения моделей в dc_logistic_regression, dd_random_forest и de_gradient_boosting с опциональным кешированием в prepared_data.joblib
         dc_logistic_regression.py - обучение Logistic Regression
-        dd_random_forest.py - обучение Random Forest (НЕ ГОТОВО)
-        de_gradient_boosting.py - обучение Gradient Boosting (НЕ ГОТОВО)
+        dd_random_forest.py - обучение Random Forest
+        de_gradient_boosting.py - обучение Gradient Boosting
+        de_gridsearch_cv.py - Поиск и cross-validation по лучшим параметрам, обучение Logistic Regression
         df_compare_models.py - сравнение трех моделей (НЕ ГОТОВО)
-        cache/ - Опционально
-            prepared_data.joblib - кеширование предобработанных данных для моделей
         models/
             logistic_regression_model.joblib - модель + scaler (со сжатием)
             logistic_regression_metrics.txt - метрики

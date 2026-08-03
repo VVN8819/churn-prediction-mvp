@@ -59,6 +59,15 @@ churn-prediction-mvp/
             prepared_data.joblib - файл для ускорения обучение каждой модели, кеширование предобработанных данных для моделей
         plots/
             01_feature_correlation_with_churn.png - визуализация корреляции признаков с целевой переменной
+            02_confusion_matrix_logreg.png - визуализация Confusion Matrix для Logistic Regression
+            03_feature_importance_logreg.png - визуализация анализа важности признаков
+            04_confusion_matrix_rf.png - визуализация Confusion Matrix для Random Forest
+            05_feature_importance_rf.png - визуализация анализа важности признаков
+            06_confusion_matrix_gb.png - визуализация Confusion Matrix для Gradient Boosting
+            07_feature_importance_gb.png - визуализация анализа важности признаков
+            08_confusion_matrix_gridsearch_cv.png - визуализация Confusion Matrix для GridSearchCV
+            09_feature_importance_gridsearch_cv.png - визуализация  анализа важности признаков
+            10_gridsearch_cv_results.png - визуализация результатов GridSearchCV
         __init__.py - (пустой, для импортов)
         d_run_pipeline_class.py - Запуск пайплайна предобработки через class db_class_data_preprocessor.py
         d_run_pipeline.py - Запуск пайплайна предобработки da_pretrain_data_prep.py
@@ -67,15 +76,21 @@ churn-prediction-mvp/
         dc_logistic_regression.py - обучение Logistic Regression
         dd_random_forest.py - обучение Random Forest
         de_gradient_boosting.py - обучение Gradient Boosting
-        de_gridsearch_cv.py - Поиск и cross-validation по лучшим параметрам, обучение Logistic Regression
-        df_compare_models.py - сравнение трех моделей (НЕ ГОТОВО)
+        df_gridsearch_cv.py - Поиск и cross-validation по лучшим параметрам, обучение Logistic Regression
+        dg_compare_models.py - сравнение четырех моделей (НЕ ГОТОВО)
         models/
             logistic_regression_model.joblib - модель + scaler (со сжатием)
             logistic_regression_metrics.txt - метрики
-            random_forest_model.joblib - модель (НЕ ГОТОВО)
-            random_forest_metrics.txt - метрики (НЕ ГОТОВО)
-            gradient_boosting_model.joblib - модель (НЕ ГОТОВО)
-            gradient_boosting_metrics.txt - метрики (НЕ ГОТОВО)
+            logreg_feature_importance.csv - важность признаков в Logistic Regression
+            random_forest_model.joblib - модель RF
+            random_forest_metrics.txt - метрики RF
+            rf_feature_importance.csv - важность признаков в Random Forest
+            gradient_boosting_model.joblib - модель GB
+            gradient_boosting_metrics.txt - метрики GB
+            gb_feature_importance.csv - важность признаков в Gradient Boosting
+            gridsearch_cv_model.joblib - модель GSCV
+            gridsearch_cv_metrics.txt - метрики GSCV
+            gridsearch_cv_feature_importance.csv - важность признаков в GridSearchCV
         predictions/ (НЕ ГОТОВО)
             logistic_regression_predictions.csv
             random_forest_predictions.csv (НЕ ГОТОВО)

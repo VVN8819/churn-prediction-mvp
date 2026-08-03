@@ -80,7 +80,8 @@ def train_and_evaluate():
         cv=5, # 5-fold cross-validation
         scoring='recall',
         n_jobs=-1, # использовать все CPU
-        verbose=1
+        verbose=1,
+        return_train_score=True
     )
     
     grid_search.fit(X_train, y_train)
@@ -129,7 +130,125 @@ def train_and_evaluate():
     print("\n Classification Report:")
     print(classification_report(y_test, y_test_pred_best, target_names=['Активные (0)', 'Ушедшие (1)']))
     
-    # 6. Визуализация Confusion Matrix
+    #6. Топ-5 комбинаций и визуализация
+    print("\nТОП-5 комбинаций по ROC-AUC")
+
+    results_df = pd.DataFrame(grid_search.cv_results_)
+    top_5 = results_df.nlargest(5, 'mean_test_score') # mean_test_score - это Recall
+
+    print("\nТоп-5 комбинаций:")
+    for idx, row in top_5.iterrows():
+        print(f"C={row['param_C']}, penalty={row['param_penalty']}, class_weight={row['param_class_weight']}")
+        print(f"Recall (CV): {row['mean_test_score']:.4f} ± {row['std_test_score']:.4f}")
+        print()
+        
+    print("\nВизуализация результатов GridSearchCV")
+    
+    # Разделяем по типу регуляризации
+    # Группируем по C и penalty, берем лучший class_weight
+    l1_results = (results_df[results_df['param_penalty'] == 'l1']
+                  .groupby('param_C')
+                  .agg({'mean_test_score': 'max', 'std_test_score': 'first'})
+                  .reset_index()
+                  .sort_values('param_C'))
+    
+    l2_results = (results_df[results_df['param_penalty'] == 'l2']
+                      .groupby('param_C')
+                      .agg({'mean_test_score': 'max', 'std_test_score': 'first'})
+                      .reset_index()
+                      .sort_values('param_C'))
+    
+    # Преобразуем param_C в float
+    l1_results['param_C'] = l1_results['param_C'].astype(float)
+    l2_results['param_C'] = l2_results['param_C'].astype(float)
+        
+    print(f"\nРезультаты для L1 (сгруппировано по C, лучший class_weight):")
+    print(l1_results[['param_C', 'mean_test_score', 'std_test_score']].to_string(index=False))
+
+    print(f"\nРезультаты для L2 (сгруппировано по C, лучший class_weight):")
+    print(l2_results[['param_C', 'mean_test_score', 'std_test_score']].to_string(index=False))
+
+    # Построение графика
+    plt.figure(figsize=(12, 7))
+
+    color_l1 = '#e74c3c'
+    color_l2 = '#3498db'
+
+    # L1 регуляризация
+    plt.plot(l1_results['param_C'], l1_results['mean_test_score'],
+            'o-', color=color_l1, linewidth=2.5, markersize=10,
+            label='L1 (Lasso)', zorder=3)
+    plt.fill_between(l1_results['param_C'],
+                    l1_results['mean_test_score'] - l1_results['std_test_score'],
+                    l1_results['mean_test_score'] + l1_results['std_test_score'],
+                    alpha=0.2, color=color_l1)
+
+    # L2 регуляризация
+    plt.plot(l2_results['param_C'], l2_results['mean_test_score'],
+            's-', color=color_l2, linewidth=2.5, markersize=10,
+            label='L2 (Ridge)', zorder=3)
+    plt.fill_between(l2_results['param_C'],
+                    l2_results['mean_test_score'] - l2_results['std_test_score'],
+                    l2_results['mean_test_score'] + l2_results['std_test_score'],
+                    alpha=0.2, color=color_l2)
+    
+    # Отмечаем ключевые элементы
+    best_C = grid_search.best_params_['C']
+    best_penalty = grid_search.best_params_['penalty']
+    best_score = grid_search.best_score_
+
+    plt.axvline(best_C, color='green', linestyle='--', linewidth=2,
+                label=f'Лучший C={best_C} ({best_penalty.upper()})', alpha=0.7, zorder=2)
+
+    # Горизонтальная линия случайного угадывания
+    plt.axhline(0.5, color='gray', linestyle=':', linewidth=1.5,
+                label='Случайное угадывание (ROC-AUC=0.5)', alpha=0.7, zorder=1)
+    
+    # Оформление графика
+    plt.xscale('log')  # Логарифмическая шкала для C
+    plt.xlabel('Параметр C (обратная сила регуляризации)', fontsize=13, fontweight='bold')
+    plt.ylabel('Recall (CV, 5-fold)', fontsize=13, fontweight='bold')
+    plt.title('GridSearchCV: Зависимость Recall от параметра C\nСравнение L1 и L2 регуляризаций',
+            fontsize=15, fontweight='bold', pad=15)
+
+    # Подписи на точках
+    for _, row in l1_results.iterrows():
+        plt.annotate(f'{row["mean_test_score"]:.3f}',
+                    (row['param_C'], row['mean_test_score']),
+                    textcoords="offset points", xytext=(0, 12),
+                    ha='center', fontsize=9, color=color_l1, fontweight='bold')
+
+    for _, row in l2_results.iterrows():
+        plt.annotate(f'{row["mean_test_score"]:.3f}',
+                    (row['param_C'], row['mean_test_score']),
+                    textcoords="offset points", xytext=(0, -18),
+                    ha='center', fontsize=9, color=color_l2, fontweight='bold')
+
+    # Сетка и легенда
+    plt.grid(True, alpha=0.3, which='both')
+    plt.grid(True, alpha=0.5, which='minor', linestyle=':')
+    plt.legend(loc='lower right', fontsize=10, framealpha=0.95)
+    plt.ylim(0.94, 0.99)  # Фокус на интересной области
+
+    # Подписи осей X
+    plt.xticks([0.01, 0.1, 1.0, 10.0, 100.0],
+            ['0.01\n(сильная\nрег.)', '0.1', '1.0', '10.0', '100.0\n(слабая\nрег.)'])
+
+    # Добавляем пояснения по регионам
+    plt.text(0.015, 0.985, '← Недообучение\n(модель слишком простая)',
+            ha='left', va='top', fontsize=10, style='italic', color='#555')
+    plt.text(80, 0.985, 'Переобучение →\n(модель слишком сложная)',
+            ha='right', va='top', fontsize=10, style='italic', color='#555')
+
+    plt.tight_layout()
+    
+    gscv_path = PLOTS_DIR / "10_gridsearch_cv_results.png"
+    plt.savefig(gscv_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    print(f"\n График GridSearchCV сохранен: {gscv_path}")
+
+    # 7. Визуализация Confusion Matrix
     cm_best = confusion_matrix(y_test, y_test_pred_best)
     plt.figure(figsize=(8, 6))
     sns.heatmap(cm_best, annot=True, fmt='d', cmap='Blues', cbar=False,
@@ -150,7 +269,7 @@ def train_and_evaluate():
     print(f"FN={cm_best[1,0]} (ошибка: сказал 'Останется', но ушел), TP={cm_best[1,1]} (верно: 'Уйдет')")
     print(f"\n Confusion Matrix сохранен: {cm_path}")
     
-    # 7. Анализ важности признаков (коэффициенты модели)
+    # 8. Анализ важности признаков (коэффициенты модели)
     print("\nВажность признаков (коэффициенты GridSearchCV)")
     
     coefficients = best_model.coef_[0]
@@ -186,7 +305,7 @@ def train_and_evaluate():
     plt.close()
     print(f"\n График важности признаков сохранен: {fi_path}")
     
-    # 8. Сохранение артефактов модели
+    # 9. Сохранение артефактов модели
     print("\nСохранение артефактов модели")
     
     # Сохраняем модель

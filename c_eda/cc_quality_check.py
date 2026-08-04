@@ -94,9 +94,9 @@ def check_accuracy(df):
     
     print('\nИтог:')
     if len(problems) == 0:
-        print('Все проверки пройдены!')
+        print('  - Accuracy: Все проверки пройдены!')
     else:
-        print(f'Найдено {len(problems)} проблем:')
+        print(f'  - Accuracy: Найдено {len(problems)} проблем (Accuracy):')
         for problem in problems:
             print(f'{problem}')
             
@@ -233,9 +233,9 @@ def check_consistency(df):
         ]
         if len(inconsistent) > 0:
             problems.append(f"{len(inconsistent)} профилей с days=999 имеют checkout_completion_rate > 0")
-            print(f"Найдено {len(inconsistent)} несоответствий")
+            print(f"  - Consistency: Найдено {len(inconsistent)} несоответствий")
         else:
-            print(f"Всё согласовано")
+            print(f"  - Consistency: Всё согласовано")
     
     # 2. Если personal_views_count_30d = 0, то personal_offer_conversion_rate должен быть 0
     print("\nПроверка: если personal_views=0, то conversion_rate=0")
@@ -246,9 +246,9 @@ def check_consistency(df):
         ]
         if len(inconsistent) > 0:
             problems.append(f"{len(inconsistent)} профилей без views имеют conversion_rate > 0")
-            print(f"Найдено {len(inconsistent)} несоответствий")
+            print(f"  - Consistency: Найдено {len(inconsistent)} несоответствий")
         else:
-            print(f"Всё согласовано")
+            print(f"  - Consistency: Всё согласовано")
             
     # 3. Если cart_abandonment_rate > 0, то должны быть cart-changes
     print("\nПроверка: если cart_abandonment_rate > 0, то avg_cart_value > 0")
@@ -259,15 +259,15 @@ def check_consistency(df):
         ]
         if len(inconsistent) > 0:
             problems.append(f"{len(inconsistent)} профилей с abandon_rate > 0 имеют avg_cart_value = 0")
-            print(f"Найдено {len(inconsistent)} несоответствий")
+            print(f"  - Consistency: Найдено {len(inconsistent)} несоответствий")
         else:
-            print(f"Всё согласовано")
+            print(f"  - Consistency: Всё согласовано")
             
     print('\nИтог:')
     if len(problems) == 0:
-        print('Все проверки согласованности пройдены!')
+        print('Все проверки согласованности (Consistency) пройдены!')
     else:
-        print(f'Найдено {len(problems)} проблем:')
+        print(f'Найдено {len(problems)} проблем (Consistency):')
         for problem in problems:
             print(f'{problem}')
             
@@ -295,7 +295,10 @@ def run_quality_check():
         
         # Итоговый отчёт
         print(f'\nИтоговый отчёт проверки качества')
-        print(f'\nAccuracy: {len(accuracy_problems)} проблем')
+        print(f'  - Accuracy: {len(accuracy_problems)} проблем')
+        print(f'  - Выбросов по IQR: {len(outliers_iqr)} проблем')
+        print(f'  - Выбросов по Z-score: {len(outliers_zscore)} проблем')
+        print(f'  - Consistency: {len(consistency_problems)} проблем')
         
         print(f'\nПроверка качества. Успешно!')
         

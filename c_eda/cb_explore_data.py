@@ -92,10 +92,10 @@ def show_missing_values(df):
     missing_df = missing_df[missing_df['Пропусков'] > 0]
     
     if len(missing_df) > 0:
-        print("\n   Найдены пропуски:")
+        print("\n   Completeness (Raw) - Найдены пропуски:")
         print(missing_df.to_string())
     else:
-        print("\nПропусков нет!")
+        print("\n   Completeness (Raw): Отлично! Пропусков нет.")
 
 # ============ Ищет дубликаты ==========
 def show_duplicates(df):

@@ -7,6 +7,10 @@ d_ml_model/db_class_data_preprocessor.py
 - Инкапсулирует все шаги подготовки данных в одном классе
 - Защита от утечки целевой переменной (исключение days_since_last_order)
 - Фильтрация "холодных" пользователей (никогда не заказывали)
+- Перевод bool → int
+- Анализ корреляции признаков с 'is_churned' (target)
+- Подготовка признаков (разделение на X и y)
+- Разделение на train/test
 - Winsorization выбросов + StandardScaler
 - Опциональное кэширование через joblib
 - Может быть переиспользован во всех скриптах обучения моделей
@@ -41,6 +45,12 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
+# Импортируем ML-константы
+from ml_config import (
+    MAX_DAYS_SINCE_ORDER,
+    SERVICE_COLS,
+    EXCLUDE_FROM_FEATURES
+)
 
 class DataPreprocessor:
     """
@@ -53,23 +63,6 @@ class DataPreprocessor:
         force_cache: принудительно пересоздать кэш
         skip_correlation: пропустить ли анализ корреляции
     """
-    
-    # Порог для фильтрации "холодных" пользователей (никогда не заказывали)
-    MAX_DAYS_SINCE_ORDER = 900
-    
-    # Служебные колонки (не используются для обучения модели)
-    SERVICE_COLS = [
-        'profile_id',
-        'snapshot_date',
-        'computed_at',
-        'churn_probability',
-        'risk_level',
-        'is_churned',
-        'model_v1.0'
-    ]
-    
-    # Колонки, которые НЕ должны быть в X (защита от утечки целевой переменной)
-    EXCLUDE_FROM_FEATURES = ['days_since_last_order']
     
     def __init__(
         self,
@@ -194,7 +187,7 @@ class DataPreprocessor:
         # ========== Шаг 2: Фильтрация "холодных" пользователей ==========
         print("\n Шаг 2: Фильтрация 'холодных' пользователей")
         initial_count = len(df)
-        df = df[df['days_since_last_order'] < self.MAX_DAYS_SINCE_ORDER].copy()
+        df = df[df['days_since_last_order'] < MAX_DAYS_SINCE_ORDER].copy()
         
         print(f"   - Было строк: {initial_count:,}")
         print(f"   - Осталось строк: {len(df):,}")
@@ -223,7 +216,7 @@ class DataPreprocessor:
         
         # Исключаем служебные колонки и признаки с утечкой
         all_exclude_cols = [
-            col for col in (self.SERVICE_COLS + self.EXCLUDE_FROM_FEATURES) 
+            col for col in (SERVICE_COLS + EXCLUDE_FROM_FEATURES) 
             if col in df.columns
         ]
         

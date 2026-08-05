@@ -18,6 +18,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+# Импортируем ML-константы
+from ml_config import LOG_COLUMNS
+
 # Импортируем функцию загрузки из CSV
 from c_eda.ca_load_data import load_from_csv
 
@@ -37,14 +40,7 @@ def handle_outliers(df):
     
     df_clean = df.copy()
     
-    log_columns = [
-        'days_since_last_order',
-        'avg_cart_value_30d',
-        'avg_copy_reaction_seconds',
-        'personal_views_count_30d'
-    ]
-    
-    for col in log_columns:
+    for col in LOG_COLUMNS:
         if col in df_clean.columns:
             df_clean[col] = np.log1p(df_clean[col])
             print(f'- {col}: применено log(1+x)')

@@ -12,6 +12,7 @@ e_inference/e_run_pipeline.py
 import sys
 import argparse
 from pathlib import Path
+import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -19,7 +20,8 @@ warnings.filterwarnings('ignore')
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from e_inference.ea_preprocess_inference import preprocess_for_inference
+from e_inference.ea_preprocess_inference import InferencePreprocessor
+from a_data_collection.ac_config import PG_CONFIG
 
 def main():
     """Главная функция оркестратора"""
@@ -50,10 +52,8 @@ def main():
         
         try:
             # Загружаем данные из БД
-            from a_data_collection.ac_config import PG_CONFIG
             from sqlalchemy import create_engine
-            import pandas as pd
-                
+                            
             # Берем настройки из конфига
             user = PG_CONFIG['user']
             password = PG_CONFIG['password']
@@ -79,16 +79,21 @@ def main():
                 
             engine = create_engine(connection_string)
             
+            # 2. Загрузка сырых данных
             query = "SELECT * FROM ml_features WHERE days_since_last_order < 900"
+            print("- Загрузка сырых данных из ml_features")
             df_raw = pd.read_sql(query, engine)
+            print(f"- Загружено {len(df_raw)} записей")
             
-            df_preprocessed = preprocess_for_inference(df_raw)
+            if len(df_raw) == 0:
+                print("\n  - Нет данных для обработки. Завершение.")
+                return
             
-            if df_preprocessed is None:
-                print("\n Ошибка на шаге 1: Предобработка не удалась")
-                sys.exit(1)
+            # 3. Создаем экземпляр класса и вызываем его метод
+            preprocessor = InferencePreprocessor()
+            df_preprocessed = preprocessor.transform(df_raw)
                 
-            print("\n- Шаг 1 завершен успешно")
+            print("\n  - Шаг 1 завершен успешно")
             
         except Exception as e:
             print(f"\n Ошибка на шаге 1: {e}")

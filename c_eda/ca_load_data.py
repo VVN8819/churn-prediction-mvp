@@ -18,11 +18,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Импортируем настройки подключения к БД
-############################ from a_data_collection.ac_config import PG_CONFIG
-
-# =============== TEST CONNECTION =====================
-from a_data_collection.ad_test_pg_connection import PG_CONFIG 
-# ======================================================
+from a_data_collection.ac_config import PG_CONFIG
 
 # ============= подключение к базе данных с SSL=========
 def get_db_connection():

@@ -17,26 +17,27 @@
 - CDP Elasticsearch - собирает события от сайта и приложения по JS трекеру (17 событий выбрал: page-view, profile-traits-update, identification, product-details-page-view, cart-changes, checkout-started, cart-delete, sign-in, profile-update, promotion-viewed, promotion-clicked,promotion-close, message-status, message-opened, rating, personal-view, copy-promocode).
 - Платформа по рассылкам - пуш в приложении, Мах, Телега, Баннеры в приложении и сайте.
 
+
 # Структура
 
 churn-prediction-mvp/
 
     a_data_collection/ - Шаг 1: Сбор сырых данных
-        a_run_pipeline.py - запуск aa_fetch_from_cdp.py и ab_process_queue.py
-        aa_fetch_from_cdp.py - Скрипт: получение данных из CDP и помещение в БД PostgreSQL
-        ab_process_queue.py - Скрипт: обработка очереди
-        ac_config.py - Настройки (подключения к CDP Elasticsearch и БД PostgreSQL)
+        a_run_pipeline.py - Главный файл запуска CDP pipeline
+        aa_fetch_from_cdp.py - Получение событий из CDP и вставка в events_queue PostgreSQL
+        ab_process_queue.py - Обработка событий из events_queue
+        ac_config.py - Единый центр конфигурации для всего проекта 'class AppConfig'
         ad_test_pg_connection.py - Проверочное подключение к базе PostgreSQL на Timeweb Cloud
         ae_test_es_connection.py - Проверочное подключение к CDP Elasticsearch
     
-    b_database/ - Шаг 2: База данных
-        ba_create_tables.sql - Создание таблиц events_queue, raw_events, profiles, ml_features, events_processing_log
-        bb_create_partitions.sql - Партиционирование raw_events по месяцам для производительности на Timeweb Cloud
+    b_database/ - Шаг 2: База данных: формирование и оптимизация
+        ba_create_tables.sql - Создание таблиц
+        bb_create_partitions.sql - Партиционирование raw_events по месяцам для производительности
         bc_create_indexes.sql - индексы для оптимизации производительности
-        bd_create_materialized_views.sql - Материализованные представления для Feature Store для мгновенных ответов на дашборде
-        be_create_maintenance.sql - Регулярное обслуживание базы данных для Timeweb Cloud чтобы БД не деградировала со временем
+        bd_create_materialized_views.sql - MV для Feature Store для мгновенных ответов на дашборде
+        be_create_maintenance.sql - Обслуживание БД для Timeweb Cloud чтобы не деградировала
         bf_test_data.sql - Тестовые данные
-        bg_test_data_testing.sql - Дополнительные тестовые SQL запросы к БД после обработки bf_test_data.sql
+        bg_test_data_testing.sql - Тестовые SQL запросы к БД после обработки bf_test_data.sql
     
     c_eda/ - Шаг 3: ETL
         data/
@@ -47,17 +48,32 @@ churn-prediction-mvp/
             02_clients_comparison.png - визуализация bar chart
             03_correlation_heatmap.png - визуализация correlation heatmap
             04_boxplots.png - визуализация выбросов boxplots
-        c_run_pipeline.py - Главный скрипт EDA, запуск 5 шагов: ca_load_data, cb_explore_data, cc_quality_check, cd_visualize и ce_clean_data
-        ca_load_data.py - Шаг 1: Загрузка из БД PostgreSQL и сохранение в df_features_raw.csv
-        cb_explore_data.py - Шаг 2: Первичный анализ
-        cc_quality_check.py - Шаг 3: Проверка качества (IQR, Z-score)
-        cd_visualize.py - Шаг 4: Визуализация
-        ce_clean_data.py - Шаг 5: Очистка (логарифмирование + encoding) и сохранение в df_features_clean.csv
+        c_run_pipeline.py - Главный файл запуска всего EDA пайплайна
+        ca_load_data.py - Загрузка данных из PostgreSQL в CSV файл
+        cb_explore_data.py - Первичный анализ данных (EDA)
+        cc_quality_check.py - Проверка качества (IQR, Z-score)
+        cd_visualize.py - Визуализация
+        ce_clean_data.py - Очистка и подготовка данных для ML-модели
     
-    d_ml_model/ - Шаг 4: ML модель
+    d_ml_model/ - Шаг 4: ML модель: обучение и выбор лучшей
         cache/
-            prepared_data.joblib - файл для ускорения обучение каждой модели, кеширование предобработанных данных для моделей
+            prepared_data.joblib - кеширование предобработанных данных для обучения моделей
+        models/
+            gb_feature_importance.csv - важность признаков
+            gradient_boosting_metrics.txt - метрики после обучения
+            gradient_boosting_model.joblib - обученная модель
+            gridsearch_cv_feature_importance.csv - важность признаков
+            gridsearch_cv_metrics.txt - метрики после обучения
+            gridsearch_cv_model.joblib - обученная модель
+            logistic_regression_metrics.txt - метрики после обучения
+            logistic_regression_model.joblib - обученная модель
+            logreg_feature_importance.csv - важность признаков
+            random_forest_metrics.txt - метрики после обучения
+            random_forest_model.joblib - обученная модель
+            rf_feature_importance.csv - важность признаков
+            scaler.joblib - scaler для инференса на новых данных
         plots/
+<<<<<<< HEAD
             01_feature_correlation_with_churn.png - визуализация корреляции признаков с целевой переменной
             02_confusion_matrix_logreg.png - визуализация Confusion Matrix для Logistic Regression
             03_feature_importance_logreg.png - визуализация анализа важности признаков
@@ -68,14 +84,26 @@ churn-prediction-mvp/
             08_confusion_matrix_gridsearch_cv.png - визуализация Confusion Matrix для GridSearchCV
             09_feature_importance_gridsearch_cv.png - визуализация  анализа важности признаков
             10_gridsearch_cv_results.png - визуализация результатов GridSearchCV
+=======
+            01_feature_correlation_with_churn.png - визуализация корреляции признаков с target
+            02_confusion_matrix_logreg.png - визуализация confusion matrix Logistic Regression
+            03_feature_importance_logreg.png - визуализация важности признаков Logistic Regression
+            04_confusion_matrix_rf.png - визуализация confusion matrix Random Forest
+            05_feature_importance_rf.png - визуализация важности признаков Random Forest
+            06_confusion_matrix_gb.png - визуализация confusion matrix Gradient Boosting
+            07_feature_importance_gb.png - визуализация важности признаков Gradient Boosting
+            08_confusion_matrix_gridsearch_cv.png - визуализация confusion matrix GridSearchCV
+            09_feature_importance_gridsearch_cv.png - визуализация важности признаков GridSearchCV
+            10_gridsearch_cv_results.png - визуализация зависимости Recall от параметра C
+            11_models_comparison.png - визуализация сравнения ключевых метрик всех моделей
+>>>>>>> churn_prediction_mvp
         __init__.py - (пустой, для импортов)
-        d_run_pipeline_class.py - Запуск пайплайна предобработки через class db_class_data_preprocessor.py
-        d_run_pipeline.py - Запуск пайплайна предобработки da_pretrain_data_prep.py
-        da_pretrain_data_prep.py - Шаги 1-7 (общие для всех моделей): 1. Загрузка очищенных данных из df_features_clean.csv. 2. Автоматический перевод bool в int (0/1). 3. Определение целевой переменной churn. 4. Анализ корреляции признаков с целевой переменной и сохранение в 01_feature_correlation_with_churn.png. 5. Подготовка признаков (разделение на X и y). 6. Разделение на train/test. 7. Масштабирование признаков (StandardScaler).
-        db_class_data_preprocessor.py - Класс DataPreprocessor для обучения моделей в dc_logistic_regression, dd_random_forest и de_gradient_boosting с опциональным кешированием в prepared_data.joblib
+        d_run_pipeline_class.py - Запуск ML-пайплайна черех class DataPreprocessor
+        db_class_data_preprocessor.py - Класс для подготовки данных для ML моделей
         dc_logistic_regression.py - обучение Logistic Regression
         dd_random_forest.py - обучение Random Forest
         de_gradient_boosting.py - обучение Gradient Boosting
+<<<<<<< HEAD
         df_gridsearch_cv.py - Поиск и cross-validation по лучшим параметрам, обучение Logistic Regression
         dg_compare_models.py - сравнение четырех моделей (НЕ ГОТОВО)
         models/
@@ -95,15 +123,26 @@ churn-prediction-mvp/
             logistic_regression_predictions.csv
             random_forest_predictions.csv (НЕ ГОТОВО)
             gradient_boosting_predictions.csv (НЕ ГОТОВО)
+=======
+        de_gridsearch_cv.py - Поиск и cross-validation по параметрам, обучение Logistic Regression
+        df_compare_models.py - сравнение четырех моделей
+    
+    e_inference/ - Шаг 5: Inference (предсказанием)
+        e_run_pipeline.py - Оркестратор инференс-пайплайна
+        ea_preprocess_inference.py - Класс для предобработки данных перед инференсом
+        
+>>>>>>> churn_prediction_mvp
     
     05_dashboard/ - Шаг 5: Дашборд (НЕ ГОТОВО)
         metabase_queries.sql - Запросы для Metabase (НЕ ГОТОВО)
-        
-    requirements.txt - Библиотеки Python
+    
     .env - Секретные настройки (пароли)
     .env.example - Шаблон для Git (без паролей)
     .gitignore - Игнорировать секреты
+    LICENSE - Лицензия
+    ml_config.py - Константы для ML-пайплайна
     README.md - Инструкция для команды
+    requirements.txt - Библиотеки Python
     SECURITY.md - Инструкция по безопасности
 
 # Признаки для моделей:

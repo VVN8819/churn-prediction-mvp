@@ -50,7 +50,7 @@ def main():
         
         try:
             # Загружаем данные из БД
-            from a_data_collection.ad_test_pg_connection import PG_CONFIG
+            from a_data_collection.ac_config import PG_CONFIG
             from sqlalchemy import create_engine
             import pandas as pd
                 

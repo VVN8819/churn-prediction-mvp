@@ -23,31 +23,31 @@
 churn-prediction-mvp/
 
     a_data_collection/ - Шаг 1: Сбор сырых данных
-        a_run_pipeline.py - Главный файл запуска CDP pipeline
-        aa_fetch_from_cdp.py - Получение событий из CDP и вставка в events_queue PostgreSQL
-        ab_process_queue.py - Обработка событий из events_queue
-        ac_config.py - Единый центр конфигурации для всего проекта 'class AppConfig'
-        ad_test_pg_connection.py - Проверочное подключение к базе PostgreSQL на Timeweb Cloud
-        ae_test_es_connection.py - Проверочное подключение к CDP Elasticsearch
+                a_run_pipeline.py - Главный файл запуска CDP pipeline
+                aa_fetch_from_cdp.py - Получение событий из CDP и вставка в events_queue PostgreSQL
+                ab_process_queue.py - Обработка событий из events_queue
+                ac_config.py - Единый центр конфигурации для всего проекта 'class AppConfig'
+                ad_test_pg_connection.py - Проверочное подключение к базе PostgreSQL на Timeweb Cloud
+                ae_test_es_connection.py - Проверочное подключение к CDP Elasticsearch
     
     b_database/ - Шаг 2: База данных: формирование и оптимизация
-        ba_create_tables.sql - Создание таблиц
-        bb_create_partitions.sql - Партиционирование raw_events по месяцам для производительности
-        bc_create_indexes.sql - индексы для оптимизации производительности
-        bd_create_materialized_views.sql - MV для Feature Store для мгновенных ответов на дашборде
-        be_create_maintenance.sql - Обслуживание БД для Timeweb Cloud чтобы не деградировала
-        bf_test_data.sql - Тестовые данные
-        bg_test_data_testing.sql - Тестовые SQL запросы к БД после обработки bf_test_data.sql
+                ba_create_tables.sql - Создание таблиц
+                bb_create_partitions.sql - Партиционирование raw_events по месяцам для производительности
+                bc_create_indexes.sql - индексы для оптимизации производительности
+                bd_create_materialized_views.sql - MV для Feature Store для мгновенных ответов на дашборде
+                be_create_maintenance.sql - Обслуживание БД для Timeweb Cloud чтобы не деградировала
+                bf_test_data.sql - Тестовые данные
+                bg_test_data_testing.sql - Тестовые SQL запросы к БД после обработки bf_test_data.sql
     
     c_eda/ - Шаг 3: ETL
         data/
-            df_features_raw.csv - Сырые данные для EDA
-            df_features_clean.csv - Очищенные данные после EDA
+                df_features_raw.csv - Сырые данные для EDA
+                df_features_clean.csv - Очищенные данные после EDA
         plots/
-            01_categories_distribution.png - визуализация bar chart
-            02_clients_comparison.png - визуализация bar chart
-            03_correlation_heatmap.png - визуализация correlation heatmap
-            04_boxplots.png - визуализация выбросов boxplots
+                01_categories_distribution.png - визуализация bar chart
+                02_clients_comparison.png - визуализация bar chart
+                03_correlation_heatmap.png - визуализация correlation heatmap
+                04_boxplots.png - визуализация выбросов boxplots
         c_run_pipeline.py - Главный файл запуска всего EDA пайплайна
         ca_load_data.py - Загрузка данных из PostgreSQL в CSV файл
         cb_explore_data.py - Первичный анализ данных (EDA)
@@ -57,33 +57,33 @@ churn-prediction-mvp/
     
     d_ml_model/ - Шаг 4: ML модель: обучение и выбор лучшей
         cache/
-            prepared_data.joblib - кеширование предобработанных данных для обучения моделей
+                prepared_data.joblib - кеширование предобработанных данных для обучения моделей
         models/
-            gb_feature_importance.csv - важность признаков
-            gradient_boosting_metrics.txt - метрики после обучения
-            gradient_boosting_model.joblib - обученная модель
-            gridsearch_cv_feature_importance.csv - важность признаков
-            gridsearch_cv_metrics.txt - метрики после обучения
-            gridsearch_cv_model.joblib - обученная модель
-            logistic_regression_metrics.txt - метрики после обучения
-            logistic_regression_model.joblib - обученная модель
-            logreg_feature_importance.csv - важность признаков
-            random_forest_metrics.txt - метрики после обучения
-            random_forest_model.joblib - обученная модель
-            rf_feature_importance.csv - важность признаков
-            scaler.joblib - scaler для инференса на новых данных
+                gb_feature_importance.csv - важность признаков
+                gradient_boosting_metrics.txt - метрики после обучения
+                gradient_boosting_model.joblib - обученная модель
+                gridsearch_cv_feature_importance.csv - важность признаков
+                gridsearch_cv_metrics.txt - метрики после обучения
+                gridsearch_cv_model.joblib - обученная модель
+                logistic_regression_metrics.txt - метрики после обучения
+                logistic_regression_model.joblib - обученная модель
+                logreg_feature_importance.csv - важность признаков
+                random_forest_metrics.txt - метрики после обучения
+                random_forest_model.joblib - обученная модель
+                rf_feature_importance.csv - важность признаков
+                scaler.joblib - scaler для инференса на новых данных
         plots/
-            01_feature_correlation_with_churn.png - визуализация корреляции признаков с target
-            02_confusion_matrix_logreg.png - визуализация confusion matrix Logistic Regression
-            03_feature_importance_logreg.png - визуализация важности признаков Logistic Regression
-            04_confusion_matrix_rf.png - визуализация confusion matrix Random Forest
-            05_feature_importance_rf.png - визуализация важности признаков Random Forest
-            06_confusion_matrix_gb.png - визуализация confusion matrix Gradient Boosting
-            07_feature_importance_gb.png - визуализация важности признаков Gradient Boosting
-            08_confusion_matrix_gridsearch_cv.png - визуализация confusion matrix GridSearchCV
-            09_feature_importance_gridsearch_cv.png - визуализация важности признаков GridSearchCV
-            10_gridsearch_cv_results.png - визуализация зависимости Recall от параметра C
-            11_models_comparison.png - визуализация сравнения ключевых метрик всех моделей
+                01_feature_correlation_with_churn.png - визуализация корреляции признаков с target
+                02_confusion_matrix_logreg.png - визуализация confusion matrix Logistic Regression
+                03_feature_importance_logreg.png - визуализация важности признаков Logistic Regression
+                04_confusion_matrix_rf.png - визуализация confusion matrix Random Forest
+                05_feature_importance_rf.png - визуализация важности признаков Random Forest
+                06_confusion_matrix_gb.png - визуализация confusion matrix Gradient Boosting
+                07_feature_importance_gb.png - визуализация важности признаков Gradient Boosting
+                08_confusion_matrix_gridsearch_cv.png - визуализация confusion matrix GridSearchCV
+                09_feature_importance_gridsearch_cv.png - визуализация важности признаков GridSearchCV
+                10_gridsearch_cv_results.png - визуализация зависимости Recall от параметра C
+                11_models_comparison.png - визуализация сравнения ключевых метрик всех моделей
         __init__.py - (пустой, для импортов)
         d_run_pipeline_class.py - Запуск ML-пайплайна черех class DataPreprocessor
         db_class_data_preprocessor.py - Класс для подготовки данных для ML моделей
@@ -94,13 +94,13 @@ churn-prediction-mvp/
         df_compare_models.py - сравнение четырех моделей
     
     e_inference/ - Шаг 5: Inference (предсказанием)
-        e_run_pipeline.py - Оркестратор инференс-пайплайна
-        ea_preprocess_inference.py - Класс для предобработки данных перед инференсом
-        eb_predict_churn.py - предсказание оттока и запись результатов в БД
+                e_run_pipeline.py - Оркестратор инференс-пайплайна
+                ea_preprocess_inference.py - Класс для предобработки данных перед инференсом
+                eb_predict_churn.py - предсказание оттока и запись результатов в БД
         
     
     05_dashboard/ - Шаг 5: Дашборд (НЕ ГОТОВО)
-        metabase_queries.sql - Запросы для Metabase (НЕ ГОТОВО)
+                metabase_queries.sql - Запросы для Metabase (НЕ ГОТОВО)
     
     .env - Секретные настройки (пароли)
     .env.example - Шаблон для Git (без паролей)

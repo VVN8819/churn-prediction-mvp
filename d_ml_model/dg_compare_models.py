@@ -28,6 +28,9 @@ PLOTS_DIR = CURRENT_DIR / "plots"
 # Создаем папку для графиков, если её нет
 PLOTS_DIR.mkdir(exist_ok=True)
 
+# Порог требования к скорости инференса (мс)
+INFERENCE_TIME_REQUIREMENT_MS = 100
+
 def parse_metrics_file(filepath):
     """Парсит текстовый файл с метриками модели"""
     metrics = {}
@@ -59,6 +62,29 @@ def parse_metrics_file(filepath):
                 metrics[key] = float(value)
                 
     return metrics
+
+def get_quality_description(roc_auc):
+    """Возвращает текстовое описание качества модели по ROC-AUC"""
+    if roc_auc >= 0.90:
+        return "отличная разделяющая способность"
+    elif roc_auc >= 0.80:
+        return "высокая разделяющая способность"
+    elif roc_auc >= 0.70:
+        return "хорошая разделяющая способность"
+    elif roc_auc >= 0.60:
+        return "удовлетворительная разделяющая способность"
+    else:
+        return "низкая разделяющая способность"
+    
+def get_interpretability_description(model_name):
+    """Возвращает описание интерпретируемости модели"""
+    if 'Logistic' in model_name or 'GridSearchCV' in model_name:
+        return "Полная интерпретируемость (можно объяснить бизнесу через коэффициенты)"
+    elif 'Random Forest' in model_name:
+        return "Средняя интерпретируемость (важность признаков, но без направления влияния)"
+    elif 'Gradient' in model_name:
+        return "Низкая интерпретируемость (ансамбль деревьев)"
+    return "Интерпретируемость неизвестна"
 
 def compare_models():
     """Главная функция сравнения моделей"""
@@ -160,7 +186,8 @@ def compare_models():
     plt.grid(axis='y', linestyle=':', alpha=0.7)
     
     # Линия требования 100 мс
-    plt.axhline(y=100, color='red', linestyle='--', linewidth=2, label='Требование: 100 мс')
+    plt.axhline(y=INFERENCE_TIME_REQUIREMENT_MS, color='red', linestyle='--',
+                linewidth=2, label=f'Требование: {INFERENCE_TIME_REQUIREMENT_MS} мс')
     plt.legend()
     
     for i, v in enumerate(df_metrics['avg_inference_time']):
@@ -202,21 +229,46 @@ def compare_models():
     # Для задачи оттока важен Recall (не пропустить уходящих клиентов)
     # Но также важна скорость для real-time инференса
 
-    print("\nДля MVP SaaS-платформы доставки еды рекомендуется:")
-    print("\n GridSearchCV (Optimized Logistic Regression)")
+    # Вычисляем динамические значения
+    best_recall_roc_auc = best_recall['roc_auc']
+    best_recall_speed = best_recall['avg_inference_time']
+    speed_ratio = int(INFERENCE_TIME_REQUIREMENT_MS / best_recall_speed)
+    quality_desc = get_quality_description(best_recall_roc_auc)
+    interpretability_desc = get_interpretability_description(best_recall['model'])
+    
+    recall_percent = best_recall['recall'] * 100
+    
+    print("\nДля MVP SaaS-платформы доставки еды рекомендуется избегать ошибок в ложном утверждении, что гость останется, но и не пропустить уходящих. Для этой цели лучше всего подойдет модель:")
+    print(f"\n {best_recall['model']}")
     print("\nПреимущества:")
     print("  - Лучший баланс качества и интерпретируемости")
-    print("  - Recall: 0.9769 (ловим 97.7% уходящих клиентов)")
-    print("  - ROC-AUC: 0.8254 (высокая разделяющая способность)")
-    print("  - Скорость: ~0.003 мс (в 33,000 раз быстрее требования)")
-    print("  - Полная интерпретируемость (можно объяснить бизнесу)")
+    print(f"  - Recall: {best_recall['recall']:.4f} (ловим {recall_percent}% уходящих гостей)")
+    print(f"  - ROC-AUC: {best_recall_roc_auc:.4f} ({quality_desc})")
+    print(f"  - Скорость: ~{best_recall_speed:.4f} мс (в {speed_ratio:,} раз быстрее требования < {INFERENCE_TIME_REQUIREMENT_MS} мс)")
+    print(f"  - {interpretability_desc}")
     print("  - Простота поддержки и деплоя")
     
-    print("\nАльтернатива для максимальной точности:")
-    print(" Gradient Boosting")
-    print("  - Лучший ROC-AUC: 0.8458")
-    print("  -  Меньше интерпретируемости")
-    print("  -  Дольше обучение")
+    # Альтернатива
+    best_roc_auc_speed = best_roc_auc['avg_inference_time']
+    best_roc_auc_speed_ratio = int(INFERENCE_TIME_REQUIREMENT_MS / best_roc_auc_speed)
+    best_roc_auc_quality = get_quality_description(best_roc_auc['roc_auc'])
+    best_roc_auc_interpretability = get_interpretability_description(best_roc_auc['model'])
+    
+    print("\nАльтернатива для максимальной точности (ROC-AUC):")
+    print(f" {best_roc_auc['model']}")
+    print(f"  - Лучший ROC-AUC: {best_roc_auc['roc_auc']:.4f} ({best_roc_auc_quality})")
+    print(f"  - Recall: {best_roc_auc['recall']:.4f}")
+    print(f"  - Скорость: {best_roc_auc_speed:.4f} мс (в {best_roc_auc_speed_ratio:,} раз быстрее требования)")
+    print(f"  - {best_roc_auc_interpretability}")
+    
+    # Если лучшая по ROC-AUC и лучшая по Recall - разные модели
+    if best_recall['model'] != best_roc_auc['model']:
+        print(f"\n  Примечание: лучшая по ROC-AUC ({best_roc_auc['model']}) и лучшая по Recall")
+        print(f"   ({best_recall['model']}) - разные модели. Выбор зависит от приоритета бизнеса:")
+        print(f"   - Если важнее НЕ ПРОПУСТИТЬ уходящего, то {best_recall['model']}")
+        print(f"   - Если важнее ОБЩАЯ ТОЧНОСТЬ, то {best_roc_auc['model']}")
+        
+    print("\n Сравнение моделей ML ЗАВЕРШЕНО")
 
 if __name__ == "__main__":
     compare_models()

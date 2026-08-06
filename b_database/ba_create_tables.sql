@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS ml_features (
     churn_probability NUMERIC(5,4),
     risk_level VARCHAR(16),
     computed_at TIMESTAMPTZ DEFAULT NOW(),
-    model_version VARCHAR(16) DEFAULT 'v1.0'
+    model_version VARCHAR(50) DEFAULT 'v1.0'
 );
 COMMENT ON TABLE ml_features IS 'Feature Store: 18 признаков + предсказание оттока';
 

@@ -3,6 +3,10 @@
 e_inference/e_run_pipeline.py
 Оркестратор инференс-пайплайна
 
+Запускает полный цикл предсказания оттока:
+- Шаг 1: Загрузка данных из БД и предобработка
+- Шаг 2: Предсказание модели и запись результатов в БД
+
 Использование:
     python e_inference/e_run_pipeline.py                    # Запустить все шаги
     python e_inference/e_run_pipeline.py --skip-preprocess  # Только предсказание
@@ -21,6 +25,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from e_inference.ea_preprocess_inference import InferencePreprocessor
+from e_inference.eb_predict_churn import run_prediction
 from a_data_collection.ac_config import PG_CONFIG
 
 def main():
@@ -45,6 +50,9 @@ def main():
     args = parser.parse_args()
     
     print("\n - Инференс пайплайн: Предсказание оттока клиентов")
+    
+    df_raw = None
+    df_preprocessed = None
     
     # Шаг 1: Предобработка
     if not args.skip_preprocess:
@@ -103,6 +111,47 @@ def main():
         
     else:
         print("\n- Шаг 1 пропущен (--skip-preprocess)")
+        print("️  Для работы Шага 2 необходимы данные из Шага 1")
+        
+    # ШАГ 2: Предсказание и запись в БД
+    if not args.skip_predict:
+        print("\n ШАГ 2: Предсказание оттока")
+        
+        try:
+            if df_raw is None or df_preprocessed is None:
+                print("  - Ошибка: Для предсказания необходимы данные из Шага 1")
+                print("  - Запустите без флага --skip-preprocess")
+                sys.exit(1)
+                
+            # Вызов функции предсказания
+            success = run_prediction(df_raw, df_preprocessed)
+            
+            if not success:
+                print("\n  - Шаг 2 завершился с ошибкой")
+                sys.exit(1)
+            
+            print("\n  - Шаг 2 завершен успешно")
+            
+        except Exception as e:
+            print(f"\n Ошибка на шаге 2: {e}")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
+        
+    else:
+        print("\n  - Шаг 2 пропущен (--skip-predict)")
+        
+    print("\n Инференс пайплайн завершон успешно!")
+    print("\n Бизнес-рекомендации:")
+    print("   - CRITICAL риск (>=70%): Срочные каскадные рассылки с промокодами и персональными предложениями")
+    print("   - HIGH риск (50-70%): push-уведомления с напоминаниями и поздравлениями")
+    print("   - MEDIUM риск (30-50%): Стандартные рекомендации в приложении и на сайте через баннеры")
+    print("   - LOW риск (<30%): Не беспокоить лишними рассылками, лишь изредко напоминайте о новинках")
+    print("\n Результаты сохранены в таблице ml_features")
+    print("   - churn_probability: вероятность оттока")
+    print("   - risk_level: уровень риска")
+    print("   - computed_at: время расчета")
+    print("   - model_version: версия модели")
 
 if __name__ == "__main__":
     main()

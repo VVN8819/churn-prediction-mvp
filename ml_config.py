@@ -51,11 +51,12 @@ EXCLUDE_FROM_FEATURES = ['days_since_last_order']
 
 # Пороги для определения уровня риска оттока
 RISK_THRESHOLDS = {
-    'HIGH': 0.70,    # >= 70% вероятность оттока
-    'MEDIUM': 0.40   # >= 40% вероятность оттока
+    'CRITICAL': 0.70,    # >= 70% вероятность оттока
+    'HIGH': 0.50,    # 50-70% вероятность оттока
+    'MEDIUM': 0.30   # 30-50% вероятность оттока
 }
 
 # Версия модели
-MODEL_VERSION = 'v1.0_gridsearch_cv'
+MODEL_VERSION = 'v1.0_gs_cv'
 
 

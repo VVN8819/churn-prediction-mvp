@@ -142,14 +142,20 @@ churn-prediction-mvp/
         df_compare_models.py - сравнение четырех моделей
     
     e_inference/ - Шаг 5: Inference (предсказанием)
+                predictions/
+                        churn_critical_20260806.csv - список с очень высокой вероятностью ухода
+                        churn_high_20260806.csv - список с высокой вероятностью ухода
+                        churn_low_20260806.csv - список с низкой вероятностью ухода
+                        churn_medium_20260806.csv - список со средней вероятностью ухода
                 e_run_pipeline.py - Оркестратор инференс-пайплайна
                 ea_preprocess_inference.py - Класс для предобработки данных перед инференсом
                 eb_predict_churn.py - предсказание оттока и запись результатов в БД
+<<<<<<< HEAD
         
 >>>>>>> churn_prediction_mvp
+=======
+>>>>>>> churn_prediction_mvp
     
-    05_dashboard/ - Шаг 5: Дашборд (НЕ ГОТОВО)
-                metabase_queries.sql - Запросы для Metabase (НЕ ГОТОВО)
     
     .env - Секретные настройки (пароли)
     .env.example - Шаблон для Git (без паролей)

@@ -96,6 +96,7 @@ churn-prediction-mvp/
     e_inference/ - Шаг 5: Inference (предсказанием)
         e_run_pipeline.py - Оркестратор инференс-пайплайна
         ea_preprocess_inference.py - Класс для предобработки данных перед инференсом
+        eb_predict_churn.py - предсказание оттока и запись результатов в БД
         
     
     05_dashboard/ - Шаг 5: Дашборд (НЕ ГОТОВО)

@@ -59,4 +59,7 @@ RISK_THRESHOLDS = {
 # Версия модели
 MODEL_VERSION = 'v1.0_gs_cv'
 
+# Размер батча для обновления БД при инференсе
+BATCH_SIZE_INFERENCE = 1000
+
 

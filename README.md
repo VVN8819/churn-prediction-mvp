@@ -1,142 +1,55 @@
 # churn-prediction-mvp
-**Проект - Regression (Регрессия)**
 
-**Цель анализа:**
-Вероятность оттока (Logistic Regression)
+**Аттестационный проект:**
+Демонстрирует комплексное владение навыками архитектора ИИ через создание законченного ML-проекта, включающего все этапы: от сбора требований и проектирования архитектуры данных до разработки, тестирования и развертывания модели машинного обучения.
+
+**Задача:** Прогнозирование оттока клиентов (Customer Churn Prediction)
+
+**Описание:** Построить систему, которая предсказывает вероятность того, что клиент перестанет совершать покупки в течение следующих 3 месяцев.
+
+**Датасет:**
+Датасет состоит из данных действующего проекта SaaS-платформы доставки еды, предоставляющая услуги более 700 рестораторам по всей России и зарубежом.
+Исходный датасет содержит персональные данные гостей одного из рестораторов, в связи с чем сырые данные могут быть предоставлены только в форме заранее рассчитанных 24 признаков + 1 target ('df_features_raw.csv') без явного указания персональных данных.
+
+**Бизнес-требования:**
+- Precision не менее 0.70 (важно не беспокоить лояльных клиентов)
+- Recall не менее 0.65 (важно выявить большинство потенциальных оттоков)
+- Модель должна объяснять свои предсказания (интерпретируемость)
+- Время инференса: < 100ms на одного клиента
+
+**ML-проект для SaaS-платформы доставки еды**
+
+**Цель анализа:** Предсказание вероятности оттока клиентов (Classification)
 
 **На выходе результат:**
-"Вероятность ухода клиента N: 73% в ближайшие 14 дней"
+- 'churn_probability' — вероятность ухода клиента (0.0 - 1.0)
+- 'risk_level' — уровень риска (CRITICAL/HIGH/MEDIUM/LOW)
+- CSV-файлы для маркетинговых команд
 
-**Использование результата:**
-Проактивная оценка, триггерные push-уведомления для реактивации клиента на платформе по доставке еды SaaS.
+**Использование результата:** Проактивная оценка, триггерные push-уведомления и рассылки в мессенджеры для реактивации клиента
 
-**Объект работы:**
-Сложное поведение гостей
+**Объект работы:** Сложное поведение гостей на сайте и в приложении
 
-**Что есть на начальном этапе:**
-- CDP Elasticsearch - собирает события от сайта и приложения по JS трекеру (17 событий выбрал: page-view, profile-traits-update, identification, product-details-page-view, cart-changes, checkout-started, cart-delete, sign-in, profile-update, promotion-viewed, promotion-clicked,promotion-close, message-status, message-opened, rating, personal-view, copy-promocode).
-- Платформа по рассылкам - пуш в приложении, Мах, Телега, Баннеры в приложении и сайте.
+**Технологии:** Python 3.12, PostgreSQL, Elasticsearch, scikit-learn, Pandas
 
+## Быстрый старт
 
-# Структура
+**1. Установка зависимостей**
+pip install -r requirements.txt
 
-churn-prediction-mvp/
+**2. Настройка подключения к БД**
+cp .env.example .env
+*Заполните .env своими настройками*
 
-    a_data_collection/ - Шаг 1: Сбор сырых данных
-                a_run_pipeline.py - Главный файл запуска CDP pipeline
-                aa_fetch_from_cdp.py - Получение событий из CDP и вставка в events_queue PostgreSQL
-                ab_process_queue.py - Обработка событий из events_queue
-                ac_config.py - Единый центр конфигурации для всего проекта 'class AppConfig'
-                ad_test_pg_connection.py - Проверочное подключение к базе PostgreSQL на Timeweb Cloud
-                ae_test_es_connection.py - Проверочное подключение к CDP Elasticsearch
-    
-    b_database/ - Шаг 2: База данных: формирование и оптимизация
-                ba_create_tables.sql - Создание таблиц
-                bb_create_partitions.sql - Партиционирование raw_events по месяцам для производительности
-                bc_create_indexes.sql - индексы для оптимизации производительности
-                bd_create_materialized_views.sql - MV для Feature Store для мгновенных ответов на дашборде
-                be_create_maintenance.sql - Обслуживание БД для Timeweb Cloud чтобы не деградировала
-                bf_test_data.sql - Тестовые данные
-                bg_test_data_testing.sql - Тестовые SQL запросы к БД после обработки bf_test_data.sql
-    
-    c_eda/ - Шаг 3: ETL
-        data/
-                df_features_raw.csv - Сырые данные для EDA
-                df_features_clean.csv - Очищенные данные после EDA
-        plots/
-                01_categories_distribution.png - визуализация bar chart
-                02_clients_comparison.png - визуализация bar chart
-                03_correlation_heatmap.png - визуализация correlation heatmap
-                04_boxplots.png - визуализация выбросов boxplots
-        c_run_pipeline.py - Главный файл запуска всего EDA пайплайна
-        ca_load_data.py - Загрузка данных из PostgreSQL в CSV файл
-        cb_explore_data.py - Первичный анализ данных (EDA)
-        cc_quality_check.py - Проверка качества (IQR, Z-score)
-        cd_visualize.py - Визуализация
-        ce_clean_data.py - Очистка и подготовка данных для ML-модели
-    
-    d_ml_model/ - Шаг 4: ML модель: обучение и выбор лучшей
-        cache/
-                prepared_data.joblib - кеширование предобработанных данных для обучения моделей
-        models/
-                gb_feature_importance.csv - важность признаков
-                gradient_boosting_metrics.txt - метрики после обучения
-                gradient_boosting_model.joblib - обученная модель
-                gridsearch_cv_feature_importance.csv - важность признаков
-                gridsearch_cv_metrics.txt - метрики после обучения
-                gridsearch_cv_model.joblib - обученная модель
-                logistic_regression_metrics.txt - метрики после обучения
-                logistic_regression_model.joblib - обученная модель
-                logreg_feature_importance.csv - важность признаков
-                random_forest_metrics.txt - метрики после обучения
-                random_forest_model.joblib - обученная модель
-                rf_feature_importance.csv - важность признаков
-                scaler.joblib - scaler для инференса на новых данных
-        plots/
-                01_feature_correlation_with_churn.png - визуализация корреляции признаков с target
-                02_confusion_matrix_logreg.png - визуализация confusion matrix Logistic Regression
-                03_feature_importance_logreg.png - визуализация важности признаков Logistic Regression
-                04_confusion_matrix_rf.png - визуализация confusion matrix Random Forest
-                05_feature_importance_rf.png - визуализация важности признаков Random Forest
-                06_confusion_matrix_gb.png - визуализация confusion matrix Gradient Boosting
-                07_feature_importance_gb.png - визуализация важности признаков Gradient Boosting
-                08_confusion_matrix_gridsearch_cv.png - визуализация confusion matrix GridSearchCV
-                09_feature_importance_gridsearch_cv.png - визуализация важности признаков GridSearchCV
-                10_gridsearch_cv_results.png - визуализация зависимости Recall от параметра C
-                11_models_comparison.png - визуализация сравнения ключевых метрик всех моделей
-        __init__.py - (пустой, для импортов)
-        d_run_pipeline_class.py - Запуск ML-пайплайна черех class DataPreprocessor
-        db_class_data_preprocessor.py - Класс для подготовки данных для ML моделей
-        dc_logistic_regression.py - обучение Logistic Regression
-        dd_random_forest.py - обучение Random Forest
-        de_gradient_boosting.py - обучение Gradient Boosting
-        de_gridsearch_cv.py - Поиск и cross-validation по параметрам, обучение Logistic Regression
-        df_compare_models.py - сравнение четырех моделей
-    
-    e_inference/ - Шаг 5: Inference (предсказанием)
-                predictions/
-                        churn_critical_20260806.csv - список с очень высокой вероятностью ухода
-                        churn_high_20260806.csv - список с высокой вероятностью ухода
-                        churn_low_20260806.csv - список с низкой вероятностью ухода
-                        churn_medium_20260806.csv - список со средней вероятностью ухода
-                e_run_pipeline.py - Оркестратор инференс-пайплайна
-                ea_preprocess_inference.py - Класс для предобработки данных перед инференсом
-                eb_predict_churn.py - предсказание оттока и запись результатов в БД
-    
-    
-    .env - Секретные настройки (пароли)
-    .env.example - Шаблон для Git (без паролей)
-    .gitignore - Игнорировать секреты
-    LICENSE - Лицензия
-    ml_config.py - Константы для ML-пайплайна
-    README.md - Инструкция для команды
-    requirements.txt - Библиотеки Python
-    SECURITY.md - Инструкция по безопасности
-
-# Признаки для моделей:
-
-1. days_since_last_order: Дней с последнего заказа
-2. cart_abandonment_rate_30d: % отказов на /checkout
-3. checkout_completion_rate: Конверсия оформления заказа (/order)
-4. checkout_frustration_index: (удаления на /checkout + низкие рейтинги) / начатые оформления
-5. personal_offer_conversion_rate: Конверсия персонального предложения (увидел personal-view и скопировал copy-promocode)
-6. promo_ignore_rate_14d: % игнорирования баннерных акций
-7. session_engagement_score: Вовлечённость сессии
-8. message_open_rate_30d: % открытых сообщений
-9. cart_browse_abandon_rate_30d: % отказов в каталоге/на главной
-10. personal_views_count_30d: Количество просмотров персонального предложения
-11. push_channel_available: Доступен ли push-канал
-12. phone_changed_90d: Менялся ли телефон за 90 дней (исключаем identification на /checkout это валидация, не изменение)
-13. avg_rating_90d: Средняя оценка за 90 дней
-14. coupon_dependency_ratio: Доля заказов с купоном за 90 дней
-15. avg_cart_value_30d: Средняя сумма корзины за 30 дней
-16. profile_completeness_score: Заполненность профиля (телефон 0.4 + имя 0.3 + день рождения 0.3)
-17. delta_page_views_14d: Дельта просмотров (последние 14 дней vs предыдущие 14)
-18. has_unpublished_review: Есть ли негативный отзыв за 90 дней
-19. cart_to_checkout_ratio: Соотношение суммы корзины к сумме чекаута
-20. avg_copy_reaction_seconds: Среднее время реакции на копирование промокода
-21. reviews_reading_behavior: Поведенческий паттерн чтения отзывов
-22. promo_interest_rate: Комбинированный интерес к акциям
-23. checkout_value_trend: Линейный тренд суммы заказа за 30 дней
-24. auth_on_checkout_flag: Флаг неавторизованного посещения чекаута
-25. Целевая переменная is_churned - Если клиент делал заказы (days < 900) и не заказывал 60+ дней - churn = 1
+**3. Запуск полного пайплайна (от сбора данных до предсказания)**
+- python a_data_collection/a_run_pipeline.py # Шаг 1: Сбор данных из CDP и помещение в БД
+- \i b_database/bd_create_materialized_views.sql # Шаг 2: Пересчет 24 признаков в таблице 'mv_ml_features'
+- \i b_database/be_create_maintenance.sql # Шаг 3: Перенос данных из 'mv_ml_features' в таблицу 'ml_features'
+- python c_eda/c_run_pipeline.py # Шаг 4: Загрузка сырых данных, EDA, очистка и сохранение CSV
+- python d_ml_model/d_run_pipeline_class.py --use-cache # Шаг 5: Создание кэша для моделей
+- python d_ml_model/dc_logistic_regression.py # Шаг 6: Обучение Logistic Regression
+- python d_ml_model/dd_random_forest.py # Шаг 7: Обучение Random Forest
+- python d_ml_model/de_gradient_boosting.py # Шаг 8: Обучение Gradient Boosting
+- python d_ml_model/df_gridsearch_cv.py # Шаг 9: Обучение через cross-validation Logistic Regression
+- python d_ml_model/dg_compare_models.py # Шаг 10: Сравнение моделей
+- python e_inference/e_run_pipeline.py # Шаг 11: Предсказание оттока

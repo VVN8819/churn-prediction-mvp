@@ -11,7 +11,7 @@
 **Датасет:**
 
 Датасет состоит из данных действующего проекта SaaS-платформы доставки еды, предоставляющая услуги более 700 рестораторам по всей России и зарубежом.
-Исходный датасет содержит персональные данные гостей одного из рестораторов, в связи с чем сырые данные могут быть предоставлены только в форме заранее рассчитанных 24 признаков + 1 target ('df_features_raw.csv') без явного указания персональных данных.
+Исходный датасет содержит персональные данные гостей одного из рестораторов, в связи с чем сырые данные могут быть предоставлены только в форме заранее рассчитанных 24 признаков + 1 target (`df_features_raw.csv`) без явного указания персональных данных.
 
 **Бизнес-требования:**
 - Precision не менее 0.70 (важно не беспокоить лояльных клиентов)
@@ -24,8 +24,8 @@
 **Цель анализа:** Предсказание вероятности оттока клиентов (Classification)
 
 **На выходе результат:**
-- 'churn_probability' — вероятность ухода клиента (0.0 - 1.0)
-- 'risk_level' — уровень риска (CRITICAL/HIGH/MEDIUM/LOW)
+- `churn_probability` — вероятность ухода клиента (0.0 - 1.0)
+- `risk_level` — уровень риска (`CRITICAL`/`HIGH`/`MEDIUM`/`LOW`)
 - CSV-файлы для маркетинговых команд
 
 **Использование результата:** Проактивная оценка, триггерные push-уведомления и рассылки в мессенджеры для реактивации клиента
@@ -45,7 +45,7 @@ pip install -r requirements.txt
 ```bash
 cp .env.example .env
 ```
-*Заполните .env своими настройками*
+*Заполните `.env` своими настройками*
 
 **3. Запуск полного пайплайна (от сбора данных до предсказания)**
 ```bash
@@ -90,4 +90,55 @@ python e_inference/e_run_pipeline.py                  # Шаг 11: Предск�
                         │  CSV Export  │
                         │  Marketing   │
                         └──────────────┘
+```
+**Поток данных:**
+1. **Сбор** (`a_data_collection`): JS Tracker - CDP Elasticsearch - `events_queue` - `raw_events` + `profiles`
+2. **Feature Engineering** (`b_database`): SQL-агрегация 24 признаков - `ml_features`
+3. **EDA** (`c_eda`): Загрузка в `df_features_raw.csv` - Анализ качества, визуализация, очистка - `df_features_clean.csv`
+4. **ML Training** (`d_ml_model`): 3 модели + GridSearchCV - лучшая модель (`.joblib`)
+5. **Inference** (`e_inference`): Предобработка - предсказание - запись в БД + CSV
+
+## Ключевые классы и конфигурация
+1. **AppConfig** (`a_data_collection/ac_config.py`)
+
+Единый центр конфигурации для всего проекта. Хранит настройки БД, Elasticsearch и константы ETL.
+```python
+from a_data_collection.ac_config import PG_CONFIG, ES_CONFIG, BATCH_SIZE
+
+# Пример использования
+engine = create_engine(f"postgresql://{PG_CONFIG['user']}:{PG_CONFIG['password']}@...")
+```
+
+2. **ml_config.py**
+
+Константы ML-пайплайна (передаются заказчику вместе с моделью):
+- `MAX_DAYS_SINCE_ORDER = 900` - порог фильтрации "холодных" пользователей
+- `LOG_COLUMNS` - признаки для логарифмирования
+- `RISK_THRESHOLDS` - пороги для CRITICAL/HIGH/MEDIUM/LOW
+- `BATCH_SIZE_INFERENCE = 1000` - размер батча при обновлении БД
+
+3. **DataPreprocessor** (`d_ml_model/db_class_data_preprocessor.py`)
+
+Класс для подготовки данных к обучению:
+- Защита от утечки целевой переменной (исключает `days_since_last_order`)
+- Winsorization выбросов (1%-99% перцентили)
+- StandardScaler для нормализации
+- Кэширование через `joblib`
+
+```bash
+from d_ml_model.db_class_data_preprocessor import DataPreprocessor
+
+preprocessor = DataPreprocessor(use_cache=True)
+data = preprocessor.prepare()
+X_train, y_train = data['X_train_scaled'], data['y_train']
+```
+4. **InferencePreprocessor** (`e_inference/ea_preprocess_inference.py`)
+
+Класс для предобработки сырых данных перед инференсом. Повторяет все шаги обучения:
+```bash
+from e_inference.ea_preprocess_inference import InferencePreprocessor
+
+preprocessor = InferencePreprocessor()
+df_processed = preprocessor.transform(df_raw)  # Сырые данные → 26 признаков
+probabilities = model.predict_proba(df_processed)[:, 1]
 ```

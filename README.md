@@ -37,23 +37,29 @@
 ## Быстрый старт
 
 **1. Установка зависимостей**
-
+```bash
 pip install -r requirements.txt
+```
 
 **2. Настройка подключения к БД**
-
+```bash
 cp .env.example .env
-
+```
 *Заполните .env своими настройками*
 
 **3. Запуск полного пайплайна (от сбора данных до предсказания)**
-
+```python
 python a_data_collection/a_run_pipeline.py            # Шаг 1: Сбор данных из CDP и помещение в БД
-
-\i b_database/bd_create_materialized_views.sql        # Шаг 2: Пересчет 24 признаков в таблице 'mv_ml_features'
-
-\i b_database/be_create_maintenance.sql               # Шаг 3: Перенос данных из 'mv_ml_features' в таблицу 'ml_features'
-
+```
+```postgresql
+-- Шаг 2: Пересчет 24 признаков в таблице 'mv_ml_features'
+\i b_database/bd_create_materialized_views.sql
+```
+```postgresql
+-- Шаг 3: Перенос данных из 'mv_ml_features' в таблицу 'ml_features'
+\i b_database/be_create_maintenance.sql
+```
+```python
 python c_eda/c_run_pipeline.py                        # Шаг 4: Загрузка сырых данных, EDA, очистка и сохранение CSV
 
 python d_ml_model/d_run_pipeline_class.py --use-cache # Шаг 5: Создание кэша для моделей
@@ -69,3 +75,4 @@ python d_ml_model/df_gridsearch_cv.py                 # Шаг 9: Обучени
 python d_ml_model/dg_compare_models.py                # Шаг 10: Сравнение моделей
 
 python e_inference/e_run_pipeline.py                  # Шаг 11: Предсказание оттока
+```

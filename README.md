@@ -47,14 +47,14 @@ cp .env.example .env
 *Заполните .env своими настройками*
 
 **3. Запуск полного пайплайна (от сбора данных до предсказания)**
-- python a_data_collection/a_run_pipeline.py            # Шаг 1: Сбор данных из CDP и помещение в БД
-- \i b_database/bd_create_materialized_views.sql        # Шаг 2: Пересчет 24 признаков в таблице 'mv_ml_features'
-- \i b_database/be_create_maintenance.sql               # Шаг 3: Перенос данных из 'mv_ml_features' в таблицу 'ml_features'
-- python c_eda/c_run_pipeline.py                        # Шаг 4: Загрузка сырых данных, EDA, очистка и сохранение CSV
-- python d_ml_model/d_run_pipeline_class.py --use-cache # Шаг 5: Создание кэша для моделей
-- python d_ml_model/dc_logistic_regression.py           # Шаг 6: Обучение Logistic Regression
-- python d_ml_model/dd_random_forest.py                 # Шаг 7: Обучение Random Forest
-- python d_ml_model/de_gradient_boosting.py             # Шаг 8: Обучение Gradient Boosting
-- python d_ml_model/df_gridsearch_cv.py                 # Шаг 9: Обучение через cross-validation Logistic Regression
-- python d_ml_model/dg_compare_models.py                # Шаг 10: Сравнение моделей
-- python e_inference/e_run_pipeline.py                  # Шаг 11: Предсказание оттока
+python a_data_collection/a_run_pipeline.py            # Шаг 1: Сбор данных из CDP и помещение в БД
+\i b_database/bd_create_materialized_views.sql        # Шаг 2: Пересчет 24 признаков в таблице 'mv_ml_features'
+\i b_database/be_create_maintenance.sql               # Шаг 3: Перенос данных из 'mv_ml_features' в таблицу 'ml_features'
+python c_eda/c_run_pipeline.py                        # Шаг 4: Загрузка сырых данных, EDA, очистка и сохранение CSV
+python d_ml_model/d_run_pipeline_class.py --use-cache # Шаг 5: Создание кэша для моделей
+python d_ml_model/dc_logistic_regression.py           # Шаг 6: Обучение Logistic Regression
+python d_ml_model/dd_random_forest.py                 # Шаг 7: Обучение Random Forest
+python d_ml_model/de_gradient_boosting.py             # Шаг 8: Обучение Gradient Boosting
+python d_ml_model/df_gridsearch_cv.py                 # Шаг 9: Обучение через cross-validation Logistic Regression
+python d_ml_model/dg_compare_models.py                # Шаг 10: Сравнение моделей
+python e_inference/e_run_pipeline.py                  # Шаг 11: Предсказание оттока

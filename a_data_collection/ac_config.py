@@ -61,7 +61,7 @@ class AppConfig:
             )
 
         # сколько событий брать за раз
-        self.BATCH_SIZE=int(os.getenv('BATCH_SIZE', '5000'))
+        self.BATCH_SIZE=int(os.getenv('BATCH_SIZE', '500'))
         self.FETCH_HOURS=int(os.getenv('FETCH_HOURS', '24'))
         self.ES_INDEX_PATTERN = os.getenv('ES_INDEX_PATTERN', 'events-*')
 

@@ -57,10 +57,10 @@ def train_and_evaluate():
     
     # 2. определение сетки параметров
     param_grid = {
-        'C': [0.01, 0.1, 1.0, 10.0, 100.0],
+        'C': [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],
         'penalty': ['l1', 'l2'],
         'class_weight': [None, 'balanced'],
-        'solver': ['saga'] # liblinear для l1, saga для обоих
+        'solver': ['saga', 'liblinear'] # liblinear для l1, saga для обоих
     }
 
     print(f"\nПараметры для перебора:")
@@ -71,7 +71,7 @@ def train_and_evaluate():
     print("Запуск GridSearchCV:")
     
     # 3. Инициализация и обучение модели
-    base_model = LogisticRegression(class_weight='balanced', max_iter=2000, random_state=42)
+    base_model = LogisticRegression(class_weight='balanced', max_iter=3000, random_state=42)
 
     # GridSearchCV с несколькими метриками
     grid_search = GridSearchCV(
@@ -228,11 +228,11 @@ def train_and_evaluate():
     plt.grid(True, alpha=0.3, which='both')
     plt.grid(True, alpha=0.5, which='minor', linestyle=':')
     plt.legend(loc='lower right', fontsize=10, framealpha=0.95)
-    plt.ylim(0.94, 0.99)  # Фокус на интересной области
+    plt.ylim(0.70, 0.99)  # Фокус на интересной области
 
     # Подписи осей X
-    plt.xticks([0.01, 0.1, 1.0, 10.0, 100.0],
-            ['0.01\n(сильная\nрег.)', '0.1', '1.0', '10.0', '100.0\n(слабая\nрег.)'])
+    plt.xticks([0.001, 0.01, 0.1, 1.0, 10.0, 100.0],
+            ['0.001\n(сильная\nрег.)', '0.01', '0.1', '1.0', '10.0', '100.0\n(слабая\nрег.)'])
 
     # Добавляем пояснения по регионам
     plt.text(0.015, 0.985, '← Недообучение\n(модель слишком простая)',

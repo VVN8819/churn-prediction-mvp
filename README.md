@@ -255,9 +255,9 @@ probabilities = model.predict_proba(df_processed)[:, 1]
 ```bash
 churn-prediction-mvp/
 ── a_data_collection/      # Шаг 1: Сбор данных из CDP
-│   ├── a_run_pipeline.py   # Оркестратор
+│   ├── a_run_pipeline.py   # Оркестратор 
 │   ├── aa_fetch_from_cdp.py
-│   ├── ab_process_queue.py
+│   ├── ab_process_queue.py  # Обработка очередей, устойчивый к сбоям, защита от дубликатов
 │   ├── ac_config.py        # AppConfig (единый конфиг)
 │   └── ad_test_pg_connection.py
 │

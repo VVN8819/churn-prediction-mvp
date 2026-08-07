@@ -9,6 +9,7 @@ ab_process_queue.py
 3. Обновляет profiles из событий identification/profile-update
 4. Помечает события как 'processed'
 5. Логирует процесс в events_processing_log
+6. Автоматически переподключается при разрыве соединения
 
 Использование:
     python ab_process_queue.py  # Обработать всю очередь
@@ -16,6 +17,7 @@ ab_process_queue.py
 
 import sys
 import json
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 import psycopg2
@@ -73,24 +75,26 @@ def select_pending_events(conn, batch_size):
 # ============ Вставка в raw_events ===========
 def insert_to_raw_events(conn, events):
     """
-    Вставляет события в raw_events
+    Вставляет события в raw_events с защитой от дубликатов (ON CONFLICT DO NOTHING).
+    
+    Это делает операцию идемпотентной: если событие уже было вставлено 
+    (например, после разрыва соединения), оно будет просто пропущено.
     
     Args:
         conn: подключение к PostgreSQL
         events: список событий из events_queue
         
     Returns:
-        int: количество вставленных событий
+        int: количество вставленных событий (без учета пропущенных дубликатов)
     """
     if not events:
         return 0
-    
-    import json
-    
+        
     with conn.cursor() as cursor:
         insert_query = """
             INSERT INTO raw_events (event_id, event_type, profile_id, session_id, event_data, inserted_at)
             VALUES %s
+            ON CONFLICT (event_id, inserted_at) DO NOTHING
         """
         
         # Подготавливаем данные: пропускаем id из events_queue
@@ -235,6 +239,10 @@ def extract_profile_data(event_data):
 def update_profiles(conn, events):
     """
     Обновляет справочник profiles из событий identification/profile-update
+    Использует batch INSERT через execute_values для скорости
+    
+    Если в батче несколько событий для одного profile_id, 
+    берётся только последнее (по inserted_at) — это и логически правильно.
     
     Args:
         conn: подключение к PostgreSQL
@@ -251,48 +259,55 @@ def update_profiles(conn, events):
     
     if not profile_events:
         return 0
-    
-    updated_count = 0
-    
-    with conn.cursor() as cursor:
-        for queue_id, event_id, event_type, profile_id, session_id, event_data, inserted_at in profile_events:
-            # Извлекаем данные пользователя
-            profile_data = extract_profile_data(event_data)
-            
-            # Если нет данных — пропускаем
-            if not any(profile_data.values()):
-                continue
-            
-            # UPSERT: вставляем или обновляем профиль
-            try:
-                cursor.execute("""
-                    INSERT INTO profiles (profile_id, phone, firstname, birthday, last_seen)
-                    VALUES (%s, %s, %s, %s, %s)
-                    ON CONFLICT (profile_id) DO UPDATE SET
-                        phone = COALESCE(EXCLUDED.phone, profiles.phone),
-                        firstname = COALESCE(EXCLUDED.firstname, profiles.firstname),
-                        birthday = COALESCE(EXCLUDED.birthday, profiles.birthday),
-                        last_seen = EXCLUDED.last_seen,
-                        updated_at = NOW()
-                """, (
-                    profile_id,
-                    profile_data['phone'],
-                    profile_data['firstname'],
-                    profile_data['birthday'],
-                    inserted_at
-                ))
-                
-                if cursor.rowcount > 0:
-                    updated_count += 1
-            
-            except Exception as e:
-                conn.rollback()
-                print(f"Ошибка обновления профиля {profile_id}: {e}")
-                continue
         
-        conn.commit()
+    # Дедупликация: для каждого profile_id оставляем только последнее событие
+    profile_events_sorted = sorted(profile_events, key=lambda e: e[6])
     
-    return updated_count
+    # Собираем данные для батчевой вставки (словарь для дедупликации по profile_id)
+    profiles_dict = {}
+    
+    for queue_id, event_id, event_type, profile_id, session_id, event_data, inserted_at in profile_events_sorted:
+        # Извлекаем данные пользователя
+        profile_data = extract_profile_data(event_data)
+        
+        # Если нет данных — пропускаем
+        if not any(profile_data.values()):
+            continue
+        
+        profiles_dict[profile_id] = (
+            profile_id,
+            profile_data['phone'],
+            profile_data['firstname'],
+            profile_data['birthday'],
+            inserted_at
+        )
+        
+    if not profiles_dict:
+        return 0
+    
+    # Преобразуем словарь в список кортежей
+    values_list = list(profiles_dict.values())
+    
+    # Батчевый UPSERT через execute_values
+    with conn.cursor() as cursor:
+        insert_query = """
+            INSERT INTO profiles (profile_id, phone, firstname, birthday, last_seen)
+            VALUES %s
+            ON CONFLICT (profile_id) DO UPDATE SET
+                phone = COALESCE(EXCLUDED.phone, profiles.phone),
+                firstname = COALESCE(EXCLUDED.firstname, profiles.firstname),
+                birthday = COALESCE(EXCLUDED.birthday, profiles.birthday),
+                last_seen = EXCLUDED.last_seen,
+                updated_at = NOW()
+        """
+        try:
+            execute_values(cursor, insert_query, values_list)
+            conn.commit()
+            return len(values_list)
+        except Exception as e:
+            conn.rollback()
+            print(f"Ошибка батчевой вставки profiles: {e}")
+            raise
 
 # ============ Пометка как processed ===========
 def mark_as_processed(conn, event_ids):
@@ -346,7 +361,14 @@ def process_queue():
     
     conn = None
     batch_id = None
+    max_retries = 5  # Максимальное количество попыток переподключения
     
+    total_fetched = 0
+    total_inserted_raw = 0
+    total_updated_profiles = 0
+    total_marked_processed = 0
+    batch_count = 0
+        
     try:
         # 1. Подключение
         conn = connect_to_postgres()
@@ -377,43 +399,73 @@ def process_queue():
         # 4. Обрабатываем батчами
         print(f"\n4. Начало обработки (батч по {BATCH_SIZE})")
         
-        total_fetched = 0
-        total_inserted_raw = 0
-        total_updated_profiles = 0
-        total_marked_processed = 0
-        batch_count = 0
+        retry_count = 0
         
         while True:
-            # Выбираем батч
-            events = select_pending_events(conn, BATCH_SIZE)
-            
-            if not events:
-                break
-            
-            batch_count += 1
-            total_fetched += len(events)
-            
-            # Получаем id событий для пометки
-            event_ids = [event[0] for event in events]
-            
-            # Вставляем в raw_events
-            inserted_raw = insert_to_raw_events(conn, events)
-            total_inserted_raw += inserted_raw
-            
-            # Обновляем profiles
-            updated_profiles = update_profiles(conn, events)
-            total_updated_profiles += updated_profiles
-            
-            # Помечаем как processed
-            marked_processed = mark_as_processed(conn, event_ids)
-            total_marked_processed += marked_processed
-            
-            # Логируем прогресс
-            progress = (total_fetched / pending_count * 100) if pending_count > 0 else 0
-            print(f"Батч {batch_count}: обработано {len(events):,} | "
-                  f"raw_events: +{inserted_raw:,} | "
-                  f"profiles: +{updated_profiles:,} | "
-                  f"Всего: {total_fetched:,}/{pending_count:,} ({progress:.1f}%)")
+            try:
+                # Выбираем батч
+                print(f"\n  Выборка батча", end='', flush=True)
+                events = select_pending_events(conn, BATCH_SIZE)
+                print(f" получено {len(events)} событий", flush=True)
+                
+                if not events:
+                    print("\n - Очередь полностью обработана")
+                    break
+                
+                batch_count += 1
+                current_batch_size = len(events)
+                total_fetched += current_batch_size
+                retry_count = 0  # Сбрасываем счетчик retry при успешной операции
+                
+                # Получаем id событий для пометки
+                event_ids = [event[0] for event in events]
+                
+                # Вставляем в raw_events
+                print(f"  Батч {batch_count}: вставка в raw_events", end='', flush=True)
+                inserted_raw = insert_to_raw_events(conn, events)
+                total_inserted_raw += inserted_raw
+                print(f" +{inserted_raw:,}", flush=True)
+                
+                # Обновляем profiles
+                print(f"  Батч {batch_count}: обновление profiles...", end='', flush=True)
+                updated_profiles = update_profiles(conn, events)
+                total_updated_profiles += updated_profiles
+                print(f" +{updated_profiles:,}", flush=True)
+                
+                # Помечаем как processed
+                print(f"  Батч {batch_count}: пометка processed...", end='', flush=True)
+                marked_processed = mark_as_processed(conn, event_ids)
+                total_marked_processed += marked_processed
+                print(f" +{marked_processed:,}", flush=True)
+                
+                # Логируем прогресс
+                progress = (total_fetched / pending_count * 100) if pending_count > 0 else 0
+                print(f" - Батч {batch_count} завершен: {current_batch_size:,} событий | "
+                      f"Всего: {total_fetched:,}/{pending_count:,} ({progress:.1f}%)", flush=True)
+                
+            except psycopg2.OperationalError as e:
+                # Разрыв соединения - пытаемся переподключиться
+                retry_count += 1
+                print(f"\n -  Разрыв соединения (попытка {retry_count}/{max_retries}): {e}", flush=True)
+                
+                if retry_count >= max_retries:
+                    print(f" -  Превышено максимальное количество попыток ({max_retries})", flush=True)
+                    raise
+                
+                print(" Ждем 3 секунды перед переподключением к PostgreSQL", flush=True)
+                time.sleep(3)  # Ждем 2 секунды перед переподключением
+                
+                try:
+                    if conn:
+                        conn.close()
+                except:
+                    pass
+                
+                print(" - Переподключение к PostgreSQL", flush=True)
+                conn = connect_to_postgres()
+                print(" - Переподключение успешно", flush=True)
+                
+                continue
             
         # 5. Логируем результат
         print(f"\n5. Запись статистики в events_processing_log")
@@ -444,8 +496,8 @@ def process_queue():
             try:
                 log_processing(
                     conn, batch_id,
-                    events_fetched=0,
-                    events_inserted=0,
+                    events_fetched=total_fetched if 'total_fetched' in locals() else 0,
+                    events_inserted=total_inserted_raw if 'total_inserted_raw' in locals() else 0,
                     events_failed=0,
                     status='failed'
                 )
@@ -458,8 +510,11 @@ def process_queue():
     
     finally:
         if conn:
-            conn.close()
-            print("\n   Подключение к PostgreSQL закрыто")
+            try:
+                conn.close()
+                print("\n   Подключение к PostgreSQL закрыто")
+            except:
+                pass
 
 if __name__ == "__main__":
     process_queue()

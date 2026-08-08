@@ -12,8 +12,10 @@ e_inference/preprocess_inference.py
 3. Перевод bool в int
 4. Логарифмирование (log1p)
 5. One-Hot Encoding для reviews_reading_behavior
-6. Winsorization (1%-99% перцентили)
-7. StandardScaler (из scaler.joblib)
+6. Удаление model_version (если есть)
+7. Winsorization (1%-99% перцентили)
+8. Приведение к ожидаемым признакам
+9. StandardScaler (из scaler.joblib)
 """
 
 import sys

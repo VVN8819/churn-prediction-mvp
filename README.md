@@ -17,6 +17,7 @@
   - [Сравнение моделей](#сравнение-моделей)
   - [Важность признаков GridSearchCV](#важность-признаков-gridsearchcv)
   - [GridSearchCV результаты](#gridsearchcv-результаты)
+  - [GridSearchCV Confusion Matrix](#gridsearchcv-confusion-matrix)
   - [Корреляция признаков с оттоком](#корреляция-признаков-с-оттоком)
 - [Структура проекта](#структура-проекта)
 - [24 признака](#24-признака)
@@ -70,6 +71,12 @@
 ```bash
 pip install -r requirements.txt
 ```
+**Список зависимостей:**
+- Database - `psycopg2-binary`, `elasticsearch`, `python-dotenv`, `sqlalchemy`
+- Data - `pandas`, `numpy`
+- Visualization - `matplotlib`, `seaborn`
+- Data quality - `scipy`
+- Machine Learning - `scikit-learn`, `joblib`
 
 **2. Настройка подключения к БД**
 ```bash
@@ -239,17 +246,56 @@ probabilities = model.predict_proba(df_processed)[:, 1]
 
 *Сравнение ROC-AUC, Recall, F1-Score и скорости инференса для 4 моделей*
 
+<details>
+<summary>Скриншот "Сравнение моделей"</summary>
+
+![Сравнение моделей](d_ml_model/plots/11_models_comparison.png)
+
+</details>
+
 ### Важность признаков GridSearchCV
 
-*Топ-15 признаков, влияющих на отток. `checkout_completion_rate (-1.53)` — самый важный*
+*Топ-15 признаков, влияющих на отток.*
+
+<details>
+<summary>Скриншот "Важность признаков GridSearchCV"</summary>
+
+![Важность признаков GridSearchCV](d_ml_model/plots/09_feature_importance_gridsearch_cv.png)
+
+</details>
 
 ### GridSearchCV результаты
 
-*Зависимость Recall от параметра C для L1 и L2 регуляризаций. Лучший результат при C=0.01*
+*Зависимость Recall от параметра C для L1 и L2 регуляризаций.*
+
+<details>
+<summary>Скриншот "GridSearchCV результаты"</summary>
+
+![GridSearchCV результаты](d_ml_model/plots/10_gridsearch_cv_results.png)
+
+<details>
+
+### GridSearchCV Confusion Matrix
+
+*Способность модели точно определить кто точно останется (TN), а кто точно уйдет (TP).*
+
+<details>
+<summary>Скриншот "GridSearchCV Confusion Matrix"</summary>
+
+![GridSearchCV Confusion Matrix](d_ml_model/plots/08_confusion_matrix_gridsearch_cv.png)
+
+<details>
 
 ### Корреляция признаков с оттоком
 
 *Какие признаки повышают/снижают риск оттока*
+
+<details>
+<summary>Скриншот "Корреляция признаков с оттоком"</summary>
+
+![Корреляция признаков с оттоком](d_ml_model/plots/01_feature_correlation_with_churn.png)
+
+<details>
 
 ## Структура проекта
 ```bash

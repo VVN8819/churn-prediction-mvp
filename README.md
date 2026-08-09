@@ -545,7 +545,7 @@ churn-prediction-mvp/
 ## Подробная архитектура проекта
 
 <details>
-<summary>Скриншот "Подробная архитектура проекта"</summary>
+<summary>Клик для просмотра "Подробная архитектура проекта"</summary>
 
 ![Подробная архитектура проекта](docs/screenshots/ML_CDP_Event_Data_Collection.png)
 

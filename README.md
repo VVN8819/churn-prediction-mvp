@@ -144,7 +144,7 @@ python e_inference/e_run_pipeline.py                  # Шаг 11: Предск�
 ```bash
 ┌─────────────────┐      ┌──────────────┐     ┌─────────────┐
 │  CDP (Elastic)  │----->│  PostgreSQL  │---->│  EDA/ML     │
-│  17 событий     │      │  raw_events  │     │  Training   │
+│ 17 событий JSON │      │  raw_events  │     │  Training   │
 └─────────────────┘      └──────────────┘     └─────────────┘
                                │                      │
                                ▼                      ▼

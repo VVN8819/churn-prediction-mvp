@@ -44,6 +44,7 @@ import seaborn as sns
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from scipy import stats
 
 # Импортируем ML-константы
 from ml_config import (
@@ -344,6 +345,118 @@ class DataPreprocessor:
         
         correlations = df[feature_cols].corrwith(df['is_churned']).dropna()
         correlations_sorted = correlations.reindex(correlations.abs().sort_values(ascending=False).index)
+        
+        # Тестирование Гипотезы 1
+        print("\nТестирование Гипотезы 1")
+        print("Поведенческие признаки лучше предсказывают отток, чем транзакционные")
+        
+        # Классификация признаков
+        transactional_features = [
+            'days_since_last_order',
+            'avg_cart_value_30d',
+            'cart_to_checkout_ratio',
+            'checkout_value_trend',
+            'coupon_dependency_ratio'
+        ]
+        
+        behavioral_features = [
+            'cart_abandonment_rate_30d',
+            'checkout_completion_rate',
+            'checkout_frustration_index',
+            'cart_browse_abandon_rate_30d',
+            'auth_on_checkout_flag',
+            'promo_ignore_rate_14d',
+            'session_engagement_score',
+            'message_open_rate_30d',
+            'push_channel_available',
+            'phone_changed_90d',
+            'avg_rating_90d',
+            'profile_completeness_score',
+            'delta_page_views_14d',
+            'has_unpublished_review',
+            'personal_offer_conversion_rate',
+            'personal_views_count_30d',
+            'avg_copy_reaction_seconds',
+            'promo_interest_rate'
+        ]
+        
+        # Фильтруем только существующие признаки в данных
+        trans_features = [f for f in transactional_features if f in correlations.index]
+        behav_features = [f for f in behavioral_features if f in correlations.index]
+        
+        print(f"\nТранзакционные признаки ({len(trans_features)}):")
+        for feat in trans_features:
+            corr = correlations[feat]
+            print(f"  - {feat}: {corr:.4f}")
+        
+        print(f"\nПоведенческие признаки ({len(behav_features)}):")
+        for feat in behav_features:
+            corr = correlations[feat]
+            print(f"  - {feat}: {corr:.4f}")
+        
+        # Рассчитываем среднюю абсолютную корреляцию
+        trans_abs_corr = correlations[trans_features].abs()
+        behav_abs_corr = correlations[behav_features].abs()
+        
+        trans_mean = trans_abs_corr.mean()
+        behav_mean = behav_abs_corr.mean()
+        
+        print("\nРезультаты сравнения:")
+        print(f"Средняя абсолютная корреляция (транзакционные): {trans_mean:.4f}")
+        print(f"Средняя абсолютная корреляция (поведенческие):  {behav_mean:.4f}")
+        
+        if behav_mean > trans_mean:
+            diff = behav_mean - trans_mean
+            pct_improvement = (diff / trans_mean) * 100
+            print(f"\nПоведенческие признаки лучше на: {diff:.4f} ({pct_improvement:.1f}%)")
+        else:
+            diff = trans_mean - behav_mean
+            pct_improvement = (diff / behav_mean) * 100
+            print(f"\nТранзакционные признаки лучше на: {diff:.4f} ({pct_improvement:.1f}%)")
+        
+        # T-TEST для проверки значимости
+        print("\nСтатистический тест (t-test):")
+        
+        # H0: Средние корреляции равны (нет различий)
+        # H1: Средние корреляции различаются
+        
+        t_statistic, p_value = stats.ttest_ind(
+            behav_abs_corr,  # behavioral features
+            trans_abs_corr,  # transactional features
+            equal_var=False  # Welch's t-test (не предполагаем равные дисперсии)
+        )
+        
+        print(f"t-статистика: {t_statistic:.4f}")
+        print(f"p-value: {p_value:.6f}")
+        
+        alpha = 0.05  # Уровень значимости
+        
+        if p_value < alpha:
+            print(f"\n Результат: Статистически значимое различие (p < {alpha})")
+            print("  H0 отвергается - средние корреляции РАЗЛИЧАЮТСЯ")
+            
+            if behav_mean > trans_mean:
+                print(f"  - Поведенческие признаки действительно лучше предсказывают отток")
+            else:
+                print(f"  - Транзакционные признаки лучше предсказывают отток")
+        else:
+            print(f"\n Результат: Различия НЕ статистически значимы (p >= {alpha})")
+            print("  H0 НЕ отвергается - средние корреляции НЕ различаются")
+            print("  - Нет доказательств, что один тип признаков лучше другого")
+        
+        # Эффект размера (Cohen's d)
+        pooled_std = np.sqrt((trans_abs_corr.std()**2 + behav_abs_corr.std()**2) / 2)
+        cohens_d = (behav_mean - trans_mean) / pooled_std
+        
+        print(f"\nРазмер эффекта (Cohen's d): {cohens_d:.4f}")
+        if abs(cohens_d) < 0.2:
+            print("  Интерпретация: Очень маленький эффект")
+        elif abs(cohens_d) < 0.5:
+            print("  Интерпретация: Маленький эффект")
+        elif abs(cohens_d) < 0.8:
+            print("  Интерпретация: Средний эффект")
+        else:
+            print("  Интерпретация: Большой эффект")
         
         # Топ-5 положительных
         positive_corr = correlations[correlations > 0].sort_values(ascending=False)

@@ -465,7 +465,8 @@ churn-prediction-mvp/
 │   ├── dd_random_forest.py
 │   ├── de_gradient_boosting.py
 │   ├── df_gridsearch_cv.py
-│   └── dg_compare_models.py  # Сравнение 4 моделей
+│   ├── dg_compare_models.py  # Сравнение 4 моделей
+│   └── dh_model_weights.py # Конфигурационный файл
 │
 ├── e_inference/            # Шаг 5: Предсказание
 │   ├── e_run_pipeline.py

@@ -7,7 +7,7 @@ d_ml_model/dg_compare_models.py
 - Gradient Boosting
 - GridSearchCV (оптимизированная Logistic Regression)
 
-Собирает метрики из текстовых файлов и строит сравнительные графики.
+Собирает метрики из текстовых файлов, строит матрицу принятия решения и сравнительные графики.
 """
 
 import sys
@@ -16,6 +16,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import re
+import numpy as np
 
 # Настройка путей
 project_root = Path(__file__).parent.parent
@@ -25,11 +26,14 @@ CURRENT_DIR = Path(__file__).parent
 MODELS_DIR = CURRENT_DIR / "models"
 PLOTS_DIR = CURRENT_DIR / "plots"
 
+# Импортируем веса из конфига
+from d_ml_model.dh_model_weights import (
+    MODEL_SELECTION_WEIGHTS,
+    INFERENCE_TIME_REQUIREMENT_MS
+)
+
 # Создаем папку для графиков, если её нет
 PLOTS_DIR.mkdir(exist_ok=True)
-
-# Порог требования к скорости инференса (мс)
-INFERENCE_TIME_REQUIREMENT_MS = 100
 
 def parse_metrics_file(filepath):
     """Парсит текстовый файл с метриками модели"""
@@ -62,6 +66,92 @@ def parse_metrics_file(filepath):
                 metrics[key] = float(value)
                 
     return metrics
+
+def calculate_interpretability_score(model_name):
+    """
+    Возвращает оценку интерпретируемости (0-1)
+    """
+    if 'Logistic' in model_name or 'GridSearchCV' in model_name:
+        return 1.0  # Полная интерпретируемость
+    elif 'Random Forest' in model_name:
+        return 0.6  # Средняя (важность признаков)
+    elif 'Gradient' in model_name:
+        return 0.4  # Низкая (ансамбль деревьев)
+    return 0.5
+
+def calculate_weighted_scores(df_metrics):
+    """
+    Рассчитывает взвешенные баллы для каждой модели
+    Используем АБСОЛЮТНЫЕ значения метрик (без нормализации)
+    """
+    df_scores = df_metrics.copy()
+    
+    # Прямой расчет взвешенных баллов (метрики уже в диапазоне 0-1)
+    df_scores['recall_score'] = df_scores['recall'] * MODEL_SELECTION_WEIGHTS['recall']
+    df_scores['roc_auc_score'] = df_scores['roc_auc'] * MODEL_SELECTION_WEIGHTS['roc_auc']
+    df_scores['f1_score_weighted'] = df_scores['f1_score'] * MODEL_SELECTION_WEIGHTS['f1_score']
+    df_scores['precision_score'] = df_scores['precision'] * MODEL_SELECTION_WEIGHTS['precision']
+    
+    # Для скорости: инвертируем (чем меньше время, тем больше баллов)
+    # Нормализуем относительно требования (100 мс)
+    max_time = INFERENCE_TIME_REQUIREMENT_MS  # 100 мс
+    df_scores['speed_score'] = (1 - df_scores['avg_inference_time'] / max_time) * MODEL_SELECTION_WEIGHTS['speed_score']
+    
+    # Интерпретируемость (категориальная оценка)
+    df_scores['interpretability_norm'] = df_scores['model'].apply(
+        calculate_interpretability_score
+    )
+    df_scores['interpretability_score'] = df_scores['interpretability_norm'] * MODEL_SELECTION_WEIGHTS['interpretability']
+    
+    # Итоговый балл
+    df_scores['total_score'] = (
+        df_scores['recall_score'] +
+        df_scores['roc_auc_score'] +
+        df_scores['f1_score_weighted'] +
+        df_scores['speed_score'] +
+        df_scores['precision_score'] +
+        df_scores['interpretability_score']
+    )
+    
+    return df_scores
+
+def print_decision_matrix(df_scores):
+    """
+    Выводит матрицу принятия решения с весами и баллами
+    """
+    print("\nМатрица принятия решения")
+    
+    # Заголовок таблицы
+    header = f"{'Модель':<20} "
+    metrics_header = ""
+    weights_header = ""
+    
+    for metric, weight in MODEL_SELECTION_WEIGHTS.items():
+        col_name = metric.replace('_score', '').replace('_', ' ').title()
+        metrics_header += f"{col_name:>12} "
+        weights_header += f"({weight*100:>3.0f}%) {'':6} "
+    
+    header += metrics_header + f"{'Итого':>10}"
+    print(header)
+    print(" " * 20 + " " + weights_header)
+    
+    # Строки с данными (показываем абсолютные значения метрик 0-1)
+    for idx, row in df_scores.iterrows():
+        line = f"{row['model']:<20} "
+        line += f"{row['recall']:>11.4f} "
+        line += f"{row['roc_auc']:>11.4f} "
+        line += f"{row['f1_score']:>11.4f} "
+        line += f"{row['speed_score']/MODEL_SELECTION_WEIGHTS['speed_score']:>11.4f} "
+        line += f"{row['precision']:>11.4f} "
+        line += f"{row['interpretability_norm']:>11.1f} "
+        line += f"{row['total_score']:>10.4f}"
+        print(line)
+    
+    print("\nРасчет итогового балла:")
+    print("  Total = (Recall × 40%) + (ROC-AUC × 25%) + (F1 × 15%) + (Speed × 10%) + (Precision × 5%) + (Interpret. × 5%)")
+    print("\nПримечание:")
+    print("  - Все метрики используют абсолютные значения (0-1)")
+    print("  - Для скорости: Score = (1 - время/100мс) × 10%")
 
 def get_quality_description(roc_auc):
     """Возвращает текстовое описание качества модели по ROC-AUC"""
@@ -113,7 +203,13 @@ def compare_models():
     # Создаем DataFrame
     df_metrics = pd.DataFrame(all_metrics)
     
-    # 2. Вывод сводной таблицы
+    # 2. Рассчитываем взвешенные баллы
+    df_scores = calculate_weighted_scores(df_metrics)
+    
+    # 3. Выводим матрицу принятия решения
+    print_decision_matrix(df_scores)
+    
+    # 4. Вывод сводной таблицы
     print("\n - Сводная таблица метрик")
     
     display_cols = ['model', 'accuracy', 'precision', 'recall', 'f1_score',
@@ -131,7 +227,7 @@ def compare_models():
     
     print('\n', df_display.to_string(index=False))
     
-    # 3. Визуализация: Сравнение ключевых метрик
+    # 5. Визуализация: Сравнение ключевых метрик
     plt.figure(figsize=(16, 12))
     
     # График 1: ROC-AUC
@@ -200,7 +296,36 @@ def compare_models():
 
     print(f"\n- Сравнительный график сохранен: {comparison_plot_path}")
     
-    # 4. Определение лучшей модели
+    # 6. Определение лучшей модели по итоговому баллу
+    print("\nЛучшая модели по итоговому баллу")
+    
+    best_model = df_scores.loc[df_scores['total_score'].idxmax()]
+    
+    print(f"\n- Лучшая модели: {best_model['model']}")
+    print(f"   Итоговый балл: {best_model['total_score']:.4f}")
+    print(f"\n   Детализация вклада в итоговый балл:")
+    print(f"   - Recall (40%):          {best_model['recall_score']:.4f}")
+    print(f"   - ROC-AUC (25%):         {best_model['roc_auc_score']:.4f}")
+    print(f"   - F1-Score (15%):        {best_model['f1_score_weighted']:.4f}")
+    print(f"   - Speed (10%):           {best_model['speed_score']:.4f}")
+    print(f"   - Precision (5%):        {best_model['precision_score']:.4f}")
+    print(f"   - Interpretability (5%): {best_model['interpretability_score']:.4f}")
+    
+    print(f"\n   Фактические метрики:")
+    print(f"   - Recall: {best_model['recall']:.4f} ({best_model['recall']*100:.2f}%)")
+    print(f"   - ROC-AUC: {best_model['roc_auc']:.4f}")
+    print(f"   - F1-Score: {best_model['f1_score']:.4f}")
+    print(f"   - Precision: {best_model['precision']:.4f}")
+    print(f"   - Скорость: {best_model['avg_inference_time']:.4f} мс")
+    
+    # Показываем топ-2 модели
+    top_2 = df_scores.nlargest(2, 'total_score')
+    if len(top_2) > 1:
+        second_best = top_2.iloc[1]
+        score_diff = (best_model['total_score'] - second_best['total_score']) * 100
+        print(f"\n   Отрыв от 2-го места ({second_best['model']}): +{score_diff:.2f} баллов")
+    
+    # 7. Дополнительные рекомендации
     print("\n - Рекомендации для продакшена -")
 
     # Лучшая по ROC-AUC
@@ -272,4 +397,7 @@ def compare_models():
 
 if __name__ == "__main__":
     compare_models()
-
+    
+    
+    
+    

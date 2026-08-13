@@ -27,7 +27,14 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from a_data_collection.ac_config import PG_CONFIG
-from ml_config import RISK_THRESHOLDS, MODEL_VERSION, BATCH_SIZE_INFERENCE
+from ml_config import (
+    RISK_THRESHOLDS,
+    MODEL_VERSION,
+    BATCH_SIZE_INFERENCE,
+    ENABLE_AB_TEST_SPLIT,
+    AB_TEST_TREATMENT_RATIO,
+    AB_TEST_SEED
+)
 
 # Пути к артефактам
 MODEL_DIR = project_root / "d_ml_model" / "models"
@@ -137,13 +144,41 @@ def run_prediction(df_raw: pd.DataFrame, df_preprocessed: pd.DataFrame) -> bool:
         timestamp = datetime.now().strftime("%Y%m%d")
         
         for level in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']:
-            df_level = df_results[df_results['risk_level'] == level]
-            filename = f"churn_{level.lower()}_{timestamp}.csv"
-            filepath = OUTPUT_DIR / filename
+            df_level = df_results[df_results['risk_level'] == level].copy()
             
-            # utf-8-sig
-            df_level.to_csv(filepath, index=False, encoding='utf-8')
-            print(f"  - Сохранено {len(df_level)} записей в: {filepath.name}")        
+            # Специальная логика для CRITICAL группы, если включен A/B тест
+            if level == 'CRITICAL' and ENABLE_AB_TEST_SPLIT and len(df_level) > 0:
+                from sklearn.model_selection import train_test_split
+                
+                # Случайное разделение 50/50 с фиксированным списком для воспроизводимости
+                df_control, df_treatment = train_test_split(
+                    df_level,
+                    test_size=AB_TEST_TREATMENT_RATIO,
+                    random_state=AB_TEST_SEED
+                )
+                
+                # Добавляем явную метку группы для маркетологов
+                df_control['ab_test_group'] = 'Control'
+                df_treatment['ab_test_group'] = 'Treatment'
+                
+                filepath_control = OUTPUT_DIR / f"churn_critical_control_{timestamp}.csv"
+                filepath_treatment = OUTPUT_DIR / f"churn_critical_treatment_{timestamp}.csv"
+            
+                df_control.to_csv(filepath_control, index=False, encoding='utf-8-sig')
+                df_treatment.to_csv(filepath_treatment, index=False, encoding='utf-8-sig')
+                
+                print(f"  - A/B тест - CRITICAL группа разделена:")
+                print(f"     - Control (без промо): {len(df_control)} записей -> {filepath_control.name}")
+                print(f"     - Treatment (с промо): {len(df_treatment)} записей -> {filepath_treatment.name}")
+                
+            else:
+                # Стандартное сохранение для HIGH, MEDIUM, LOW или если A/B тест выключен
+                filename = f"churn_{level.lower()}_{timestamp}.csv"
+                filepath = OUTPUT_DIR / filename
+                
+                # utf-8-sig
+                df_level.to_csv(filepath, index=False, encoding='utf-8-sig')
+                print(f"  - Сохранено {len(df_level)} записей в: {filepath.name}")        
         
         # 8. Обновление БД
         print("\n Обновление таблицы ml_features в базе данных")

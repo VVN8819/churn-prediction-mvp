@@ -84,7 +84,7 @@ class InferencePreprocessor:
         print(f"   - Исключено колонок: {len(cols_to_drop)}")
 
         # Шаг 3: Перевод bool в int (если есть)
-        print("\n Шаг 3: Перевод bool → int (0/1)")
+        print("\n Шаг 3: Перевод bool в int (0/1)")
         bool_cols = df.select_dtypes(include=['bool']).columns
 
         if len(bool_cols) > 0:

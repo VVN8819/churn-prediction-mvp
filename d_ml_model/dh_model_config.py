@@ -28,7 +28,27 @@ HIGHER_IS_BETTER = {
     'interpretability': True
 }
 
-# Классификация признаков для тестирования гипотез
+# ======= Параметры статистического тестирования (для dg_compare_models.py)
+# Уровень доверия для доверительных интервалов (95% стандарт)
+CONFIDENCE_LEVEL = 0.95
+
+# Количество итераций Bootstrap для расчёта CI
+BOOTSTRAP_ITERATIONS = 1000
+
+# Метод расчёта доверительного интервала: 'bootstrap' или 'normal'
+CI_METHOD = 'bootstrap'
+
+# Порог улучшения Recall для Гипотезы 2 (5%)
+# H0: GridSearchCV не улучшает Recall на ≥ 5% по сравнению с baseline
+# H1: GridSearchCV улучшает Recall на ≥ 5%
+HYPOTHESIS_2_IMPROVEMENT_THRESHOLD = 0.05
+
+# Количество положительных примеров в тестовой выборке
+# (из classification report: support для класса "Ушедшие (1)")
+# Для датасета: ушедший клиент в тестовой выборке (FN+TP) (ошибка: сказал 'Останется', но ушел) + (верно: 'Уйдет')
+TEST_POSITIVE_SAMPLES = 741
+
+# ====== Классификация признаков для тестирования гипотез
 # Транзакционные признаки (связаны с покупками и чеками)
 TRANSACTIONAL_FEATURES = [
     'days_since_last_order',

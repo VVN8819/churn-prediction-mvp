@@ -8,6 +8,7 @@ d_ml_model/dg_compare_models.py
 - GridSearchCV (оптимизированная Logistic Regression)
 
 Собирает метрики из текстовых файлов, строит матрицу принятия решения и сравнительные графики.
+Статистический анализ (Bootstrap CI, Z-test, Гипотеза 2).
 """
 
 import sys
@@ -17,6 +18,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re
 import numpy as np
+from scipy import stats as scipy_stats
 
 # Настройка путей
 project_root = Path(__file__).parent.parent
@@ -29,7 +31,12 @@ PLOTS_DIR = CURRENT_DIR / "plots"
 # Импортируем веса из конфига
 from d_ml_model.dh_model_config import (
     MODEL_SELECTION_WEIGHTS,
-    INFERENCE_TIME_REQUIREMENT_MS
+    INFERENCE_TIME_REQUIREMENT_MS,
+    CONFIDENCE_LEVEL,
+    BOOTSTRAP_ITERATIONS,
+    CI_METHOD,
+    HYPOTHESIS_2_IMPROVEMENT_THRESHOLD,
+    TEST_POSITIVE_SAMPLES
 )
 
 # Создаем папку для графиков, если её нет
@@ -176,6 +183,234 @@ def get_interpretability_description(model_name):
         return "Низкая интерпретируемость (ансамбль деревьев)"
     return "Интерпретируемость неизвестна"
 
+# Функции статистического анализа
+def bootstrap_recall_ci(recall, n_positive, confidence=CONFIDENCE_LEVEL, 
+                        n_iterations=BOOTSTRAP_ITERATIONS):
+    """
+    Рассчитывает Bootstrap доверительный интервал для Recall
+    
+    Метод: симуляция биномиального распределения
+    На каждой итерации генерируем количество "успехов" (правильно предсказанных
+    ушедших клиентов) из биномиального распределения и считаем долю.
+    
+    Args:
+        recall: значение Recall (0-1)
+        n_positive: количество положительных примеров в тесте
+        confidence: уровень доверия (0.95 = 95%)
+        n_iterations: количество bootstrap-итераций
+    
+    Returns:
+        (lower, upper) - границы доверительного интервала
+    """
+    bootstrap_recalls = []
+    
+    for _ in range(n_iterations):
+        # Симуляция: сколько из n_positive клиентов модель правильно определит
+        successes = np.random.binomial(n_positive, recall)
+        bootstrap_recalls.append(successes / n_positive)
+    
+    alpha = 1 - confidence
+    lower = np.percentile(bootstrap_recalls, 100 * alpha / 2)
+    upper = np.percentile(bootstrap_recalls, 100 * (1 - alpha / 2))
+    
+    return lower, upper
+
+def compare_two_recalls_ztest(recall_1, recall_2, n_positive):
+    """
+    Z-test для сравнения двух Recall (двух пропорций)
+    
+    Проверяет, статистически значимо ли отличаются два Recall,
+    рассчитанных на одной и той же тестовой выборке.
+    
+    Args:
+        recall_1: Recall первой модели (baseline)
+        recall_2: Recall второй модели (optimized)
+        n_positive: количество положительных примеров в тесте
+    
+    Returns:
+        dict с z_statistic, p_value, significant
+    """
+    # Стандартные ошибки для каждой пропорции
+    se1 = np.sqrt(recall_1 * (1 - recall_1) / n_positive)
+    se2 = np.sqrt(recall_2 * (1 - recall_2) / n_positive)
+    
+    # Объединённая стандартная ошибка разности
+    se_diff = np.sqrt(se1**2 + se2**2)
+    
+    if se_diff == 0:
+        return {'z_statistic': 0.0, 'p_value': 1.0, 'significant': False}
+    
+    # Z-статистика
+    z = (recall_2 - recall_1) / se_diff
+    
+    # Двусторонний p-value
+    p_value = 2 * (1 - scipy_stats.norm.cdf(abs(z)))
+    
+    return {
+        'z_statistic': z,
+        'p_value': p_value,
+        'significant': p_value < 0.05
+    }
+    
+def calculate_improvement_percentage(recall_new, recall_baseline):
+    """
+    Рассчитывает процент улучшения Recall
+    
+    Args:
+        recall_new: Recall новой (оптимизированной) модели
+        recall_baseline: Recall baseline модели
+    
+    Returns:
+        float: процент улучшения
+    """
+    if recall_baseline == 0:
+        return 0.0
+    return ((recall_new - recall_baseline) / recall_baseline) * 100
+
+def print_statistical_analysis(df_metrics):
+    """
+    Выводит полный статистический анализ сравнения моделей:
+    - Bootstrap доверительные интервалы для Recall каждой модели
+    - Z-test сравнения GridSearchCV vs baseline (Logistic Regression)
+    - Процент улучшения
+    - Проверка порога 5% из Гипотезы 2
+    """
+    print("\nСтатистический анализ сравнения моделей")
+    
+    # Базовая модель для сравнения
+    baseline_name = 'Logistic Regression'
+    optimized_name = 'GridSearchCV'
+    
+    baseline_row = df_metrics[df_metrics['model'] == baseline_name].iloc[0]
+    optimized_row = df_metrics[df_metrics['model'] == optimized_name].iloc[0]
+    
+    baseline_recall = baseline_row['recall']
+    optimized_recall = optimized_row['recall']
+    
+    # Количество положительных примеров в тесте
+    n_positive = TEST_POSITIVE_SAMPLES
+    
+    print(f"\n- Сравнение: {optimized_name} vs {baseline_name}")
+    print(f"   Количество положительных примеров в тесте: {n_positive}")
+    print(f"   Уровень доверия: {CONFIDENCE_LEVEL*100:.0f}%")
+    print(f"   Метод CI: {CI_METHOD}")
+    print(f"   Bootstrap итераций: {BOOTSTRAP_ITERATIONS}")
+    print()
+    
+    # Блок 1: Доверительные интервалы для Recall каждой модели
+    print("\n - Доверительные интервалы для Recall (Bootstrap):")
+    
+    for _, row in df_metrics.iterrows():
+        if CI_METHOD == 'bootstrap':
+            ci_lower, ci_upper = bootstrap_recall_ci(
+                row['recall'], n_positive, CONFIDENCE_LEVEL, BOOTSTRAP_ITERATIONS
+            )
+        else:
+            # Нормальное приближение (fallback)
+            z = scipy_stats.norm.ppf(1 - (1 - CONFIDENCE_LEVEL) / 2)
+            se = np.sqrt(row['recall'] * (1 - row['recall']) / n_positive)
+            ci_lower = max(0, row['recall'] - z * se)
+            ci_upper = min(1, row['recall'] + z * se)
+        
+        ci_width = ci_upper - ci_lower
+        
+        # Подсветка лучшей модели
+        marker = " ПОБЕДА!" if row['model'] == optimized_name else ""
+        
+        print(f"   {row['model']:<25} Recall={row['recall']:.4f}  "
+              f"95% CI=[{ci_lower:.4f}, {ci_upper:.4f}]  "
+              f"(ширина: ±{ci_width/2:.4f}){marker}")
+    
+    # Блок 2: Z-test сравнения GridSearchCV vs baseline
+    print(f"\n - Z-test: {optimized_name} vs {baseline_name}")
+    
+    test_result = compare_two_recalls_ztest(baseline_recall, optimized_recall, n_positive)
+    
+    print(f"   Recall {baseline_name}: {baseline_recall:.4f}")
+    print(f"   Recall {optimized_name}: {optimized_recall:.4f}")
+    print(f"   Абсолютное улучшение:   {optimized_recall - baseline_recall:+.4f}")
+    
+    improvement_pct = calculate_improvement_percentage(optimized_recall, baseline_recall)
+    print(f"   Относительное улучшение: {improvement_pct:+.2f}%")
+    print()
+    print(f"   Z-статистика: {test_result['z_statistic']:.4f}")
+    print(f"   P-value:      {test_result['p_value']:.6f}")
+    
+    if test_result['p_value'] < 0.001:
+        print(f"   - РЕЗУЛЬТАТ: Статистически значимое улучшение (p < 0.001)")
+    elif test_result['p_value'] < 0.01:
+        print(f"   - РЕЗУЛЬТАТ: Статистически значимое улучшение (p < 0.01)")
+    elif test_result['p_value'] < 0.05:
+        print(f"   - РЕЗУЛЬТАТ: Статистически значимое улучшение (p < 0.05)")
+    else:
+        print(f"   - РЕЗУЛЬТАТ: Улучшение НЕ статистически значимо (p >= 0.05)")
+    
+    # Блок 3: Проверка Гипотезы 2 (порог 5%)
+    print(f"\n - Проверка Гипотезы 2:")
+    print(f"   H0: GridSearchCV не улучшает Recall на ≥ {HYPOTHESIS_2_IMPROVEMENT_THRESHOLD*100:.0f}% "
+          f"по сравнению с {baseline_name}")
+    print(f"   H1: GridSearchCV улучшает Recall на ≥ {HYPOTHESIS_2_IMPROVEMENT_THRESHOLD*100:.0f}% "
+          f"по сравнению с {baseline_name}")
+    print()
+    
+    threshold_met = improvement_pct >= HYPOTHESIS_2_IMPROVEMENT_THRESHOLD * 100
+    statistically_significant = test_result['p_value'] < 0.05
+    
+    print(f"   Порог улучшения ({HYPOTHESIS_2_IMPROVEMENT_THRESHOLD*100:.0f}%): "
+          f"{' - ДОСТИГНУТ' if threshold_met else ' - НЕ ДОСТИГНУТ'} "
+          f"(факт: {improvement_pct:+.2f}%)")
+    print(f"   Статистическая значимость: "
+          f"{' - ЕСТЬ' if statistically_significant else ' - НЕТ'} "
+          f"(p = {test_result['p_value']:.6f})")
+    print()
+    
+    # Итоговый вывод по Гипотезе 2
+    if threshold_met and statistically_significant:
+        print("   - ВЫВОД: Гипотеза 2 ПОДТВЕРЖДЕНА")
+        print("      GridSearchCV значимо улучшает Recall на ≥ 5% по сравнению с baseline")
+    elif statistically_significant and not threshold_met:
+        print("   -  ВЫВОД: Гипотеза 2 ЧАСТИЧНО ПОДТВЕРЖДЕНА")
+        print("      Улучшение статистически значимо, но не достигает порога 5%")
+        print(f"      Фактическое улучшение: {improvement_pct:+.2f}%")
+        print(f"      Не хватает до порога: {HYPOTHESIS_2_IMPROVEMENT_THRESHOLD*100 - improvement_pct:.2f}%")
+    elif threshold_met and not statistically_significant:
+        print("   -  ВЫВОД: Гипотеза 2 ЧАСТИЧНО ПОДТВЕРЖДЕНА")
+        print("      Порог 5% достигнут, но улучшение НЕ статистически значимо")
+        print("      Возможно, требуется больше данных для подтверждения")
+    else:
+        print("   - ВЫВОД: Гипотеза 2 НЕ ПОДТВЕРЖДЕНА")
+        print("      Улучшение не достигает порога 5% и не является статистически значимым")
+    
+    # Блок 4: Практическая интерпретация для бизнеса
+    print(f"\n - Практическая интерпретация для бизнеса:")
+    
+    # Сколько дополнительных клиентов "поймали" благодаря GridSearchCV
+    additional_caught = int((optimized_recall - baseline_recall) * n_positive)
+    missed_by_baseline = int((1 - baseline_recall) * n_positive)
+    missed_by_optimized = int((1 - optimized_recall) * n_positive)
+    
+    print(f"   Из {n_positive} ушедших клиентов в тестовой выборке:")
+    print(f"   - {baseline_name} находит: {int(baseline_recall * n_positive)} клиентов "
+          f"(пропускает {missed_by_baseline})")
+    print(f"   - {optimized_name} находит: {int(optimized_recall * n_positive)} клиентов "
+          f"(пропускает {missed_by_optimized})")
+    print(f"   - Дополнительно поймано: {additional_caught} клиентов")
+    print()
+    print(f"   Если средний чек клиента = 991.69:")
+    print(f"   - Потерянная выручка при {baseline_name}: {missed_by_baseline * 991.69:,.2f}₽")
+    print(f"   - Потерянная выручка при {optimized_name}: {missed_by_optimized * 991.69:,.2f}₽")
+    print(f"   - Сохранённая выручка: {(missed_by_baseline - missed_by_optimized) * 991.69:,.2f}₽")
+    
+    return {
+        'baseline_recall': baseline_recall,
+        'optimized_recall': optimized_recall,
+        'improvement_pct': improvement_pct,
+        'p_value': test_result['p_value'],
+        'threshold_met': threshold_met,
+        'statistically_significant': statistically_significant,
+        'additional_caught': additional_caught,
+    }   
+    
 def compare_models():
     """Главная функция сравнения моделей"""
     
@@ -392,7 +627,12 @@ def compare_models():
         print(f"   ({best_recall['model']}) - разные модели. Выбор зависит от приоритета бизнеса:")
         print(f"   - Если важнее НЕ ПРОПУСТИТЬ уходящего, то {best_recall['model']}")
         print(f"   - Если важнее ОБЩАЯ ТОЧНОСТЬ, то {best_roc_auc['model']}")
-        
+    
+    # Блок 8 - Статистический анализ
+    print("\nСтатистическая валидация")
+    
+    stats_results = print_statistical_analysis(df_metrics)
+       
     print("\n Сравнение моделей ML ЗАВЕРШЕНО")
 
 if __name__ == "__main__":

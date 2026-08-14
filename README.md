@@ -478,7 +478,8 @@ churn-prediction-mvp/
 │   ├── de_gradient_boosting.py
 │   ├── df_gridsearch_cv.py
 │   ├── dg_compare_models.py  # Сравнение 4 моделей
-│   └── dh_model_config.py # Конфигурационный файл
+│   ├── dh_model_config.py # Конфигурационный файл
+│   └── di_hypothesis_test.py # Класс для статистического тестирования гипотез
 │
 ├── e_inference/            # Шаг 5: Предсказание
 │   ├── e_run_pipeline.py

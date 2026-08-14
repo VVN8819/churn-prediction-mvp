@@ -14,6 +14,8 @@ d_ml_model/db_class_data_preprocessor.py
 - Winsorization выбросов + StandardScaler
 - Опциональное кэширование через joblib
 - Может быть переиспользован во всех скриптах обучения моделей
+- Анализирует корреляцию признаков с is_churned
+- Средняя абсолютная корреляция, t-test
 
 Использование:
     from d_ml_model.db_class_data_preprocessor import DataPreprocessor
@@ -51,6 +53,13 @@ from ml_config import (
     MAX_DAYS_SINCE_ORDER,
     SERVICE_COLS,
     EXCLUDE_FROM_FEATURES
+)
+
+# Импортируем классификацию признаков
+from d_ml_model.dh_model_config import (
+    TRANSACTIONAL_FEATURES,
+    BEHAVIORAL_FEATURES,
+    HYPOTHESIS_TEST_ALPHA
 )
 
 class DataPreprocessor:
@@ -195,7 +204,7 @@ class DataPreprocessor:
         print(f"   - Удалено (никогда не заказывали): {initial_count - len(df):,}")
         
         # ========== Шаг 3: Перевод bool → int ==========
-        print("\n Шаг 3: Перевод bool → int (0/1)")
+        print("\n Шаг 3: Перевод bool в int (0/1)")
         bool_cols = df.select_dtypes(include=['bool']).columns
         
         if len(bool_cols) > 0:
@@ -348,37 +357,11 @@ class DataPreprocessor:
         
         # Тестирование Гипотезы 1
         print("\nТестирование Гипотезы 1")
-        print("Поведенческие признаки лучше предсказывают отток, чем транзакционные")
+        print("Транзакционные признаки имеют более высокую корреляцию с is_churned")
         
-        # Классификация признаков
-        transactional_features = [
-            'days_since_last_order',
-            'avg_cart_value_30d',
-            'cart_to_checkout_ratio',
-            'checkout_value_trend',
-            'coupon_dependency_ratio'
-        ]
-        
-        behavioral_features = [
-            'cart_abandonment_rate_30d',
-            'checkout_completion_rate',
-            'checkout_frustration_index',
-            'cart_browse_abandon_rate_30d',
-            'auth_on_checkout_flag',
-            'promo_ignore_rate_14d',
-            'session_engagement_score',
-            'message_open_rate_30d',
-            'push_channel_available',
-            'phone_changed_90d',
-            'avg_rating_90d',
-            'profile_completeness_score',
-            'delta_page_views_14d',
-            'has_unpublished_review',
-            'personal_offer_conversion_rate',
-            'personal_views_count_30d',
-            'avg_copy_reaction_seconds',
-            'promo_interest_rate'
-        ]
+        # Классификация признаков (из конфига)
+        transactional_features = TRANSACTIONAL_FEATURES
+        behavioral_features = BEHAVIORAL_FEATURES
         
         # Фильтруем только существующие признаки в данных
         trans_features = [f for f in transactional_features if f in correlations.index]
@@ -429,7 +412,7 @@ class DataPreprocessor:
         print(f"t-статистика: {t_statistic:.4f}")
         print(f"p-value: {p_value:.6f}")
         
-        alpha = 0.05  # Уровень значимости
+        alpha = HYPOTHESIS_TEST_ALPHA  # Уровень значимости из конфига
         
         if p_value < alpha:
             print(f"\n Результат: Статистически значимое различие (p < {alpha})")

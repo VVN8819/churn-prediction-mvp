@@ -27,7 +27,7 @@ MODELS_DIR = CURRENT_DIR / "models"
 PLOTS_DIR = CURRENT_DIR / "plots"
 
 # Импортируем веса из конфига
-from d_ml_model.dh_model_weights import (
+from d_ml_model.dh_model_config import (
     MODEL_SELECTION_WEIGHTS,
     INFERENCE_TIME_REQUIREMENT_MS
 )

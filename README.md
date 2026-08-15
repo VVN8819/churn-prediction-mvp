@@ -479,7 +479,8 @@ churn-prediction-mvp/
 │   ├── df_gridsearch_cv.py
 │   ├── dg_compare_models.py  # Сравнение 4 моделей
 │   ├── dh_model_config.py # Конфигурационный файл
-│   └── di_hypothesis_test.py # Класс для статистического тестирования гипотез
+│   ├── di_hypothesis_test.py # Класс для статистического тестирования гипотез
+│   └── dj_mlflow_tracker_class.py # Класс для трекинга экспериментов через MLflow
 │
 ├── e_inference/            # Шаг 5: Предсказание
 │   ├── e_run_pipeline.py
@@ -498,6 +499,7 @@ churn-prediction-mvp/
 - `avg_cart_value_30d` - средняя сумма корзины
 - `cart_to_checkout_ratio` - соотношение корзины к чекауту
 - `checkout_value_trend` - тренд суммы заказа
+- `coupon_dependency_ratio` - доля заказов с промокодом
 ### Отказы и фрустрация
 - `cart_abandonment_rate_30d` - % отказов на /checkout
 - `checkout_completion_rate` - конверсия оформления
@@ -513,7 +515,6 @@ churn-prediction-mvp/
 - `promo_interest_rate` - интерес к акциям
 - `message_open_rate_30d` - % открытых сообщений
 - `push_channel_available` - доступен ли push
-- `coupon_dependency_ratio` - доля заказов с промокодом
 - `phone_changed_90d` - менялся ли телефон
 ### Поведенческие
 - `session_engagement_score` - вовлеченность сессии

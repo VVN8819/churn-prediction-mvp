@@ -59,3 +59,7 @@ a_data_collection/ae_test_es_connection.py
 # d_ml_model/
 d_ml_model/d_run_pipeline.py
 d_ml_model/da_pretrain_data_prep.py
+
+# MLFlow
+mlruns/
+mlflow.db

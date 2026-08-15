@@ -5,7 +5,11 @@ d_ml_model/df_gridsearch_cv.py
 """
 
 import sys
+import time
+import warnings
 from pathlib import Path
+
+warnings.filterwarnings('ignore')
 
 # Настройка путей
 # Добавляем корень проекта в системные пути, чтобы Python мог находить модули
@@ -17,11 +21,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import time
-from pathlib import Path
 from sklearn.model_selection import GridSearchCV, cross_val_score
-import warnings
-warnings.filterwarnings('ignore')
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
@@ -30,6 +30,9 @@ from sklearn.metrics import (
 
 # Импортируем наш класс подготовки данных
 from d_ml_model.db_class_data_preprocessor import DataPreprocessor
+
+# MLFLOW: Импортируем трекер
+from d_ml_model.dj_mlflow_tracker_class import get_tracker
 
 # Настройка путей
 CURRENT_DIR = Path(__file__).parent
@@ -67,6 +70,12 @@ def train_and_evaluate():
     print(f"  C: {param_grid['C']}")
     print(f"  penalty: {param_grid['penalty']}")
     print(f"  solver: {param_grid['solver']}")
+    print(f"  class_weight: {param_grid['class_weight']}")
+
+    # Подсчет количества комбинаций
+    n_combinations = (len(param_grid['C']) * len(param_grid['penalty']) * 
+                      len(param_grid['class_weight']) * len(param_grid['solver']))
+    print(f"  Всего комбинаций: {n_combinations}")
 
     print("Запуск GridSearchCV:")
     
@@ -333,8 +342,61 @@ def train_and_evaluate():
         f.write(f"Требования ко времени инференса (< 100ms): {'Требование выполнено!' if inference_requirement_met else 'Требование НЕ выполнено!'}\n")
     print(f"- Метрики сохранены: {metrics_path}")
     
-    print("\nОбучение GridSearchCV завершено УСПЕШНО!")
+    # 8. MLFlow трекинг
+    print("\n Логирование артефактов и метрик в MLflow")
+    
+    # Получаем singleton экземпляр трекера
+    tracker = get_tracker()
+    
+    # Используем контекстный менеджер для автоматического открытия и закрытия run
+    with tracker.start_run(run_name="gridsearch_cv"):
+        
+        # 8.1. Логируем гиперпараметры GridSearchCV
+        # Логируем лучшие найденные параметры
+        tracker.log_params({
+            'best_C': grid_search.best_params_['C'],
+            'best_penalty': grid_search.best_params_['penalty'],
+            'best_class_weight': str(grid_search.best_params_['class_weight']),
+            'best_solver': grid_search.best_params_['solver'],
+            # Параметры поиска
+            'cv_folds': 5,
+            'n_combinations': n_combinations,
+            'scoring_metric': 'recall',
+            'base_max_iter': 3000,
+            'base_random_state': 42
+        })
+        
+        # 8.2. Логируем метрики (включая best_cv_recall из кросс-валидации)
+        metrics = {
+            'accuracy': accuracy_score(y_test, y_test_pred_best),
+            'precision': precision_score(y_test, y_test_pred_best),
+            'recall': recall_score(y_test, y_test_pred_best),
+            'f1_score': f1_score(y_test, y_test_pred_best),
+            'roc_auc': roc_auc_score(y_test, y_test_proba_best),
+            'inference_time_ms': avg_inference_time_per_client_ms,
+            'best_cv_recall': grid_search.best_score_
+        }
+        tracker.log_metrics(metrics)
+        
+        # 8.3. Логируем саму модель (лучшую из GridSearchCV)
+        tracker.log_model(
+            best_model, 
+            artifact_path="model", 
+            registered_model_name="churn_gridsearch_cv"
+        )
+        
+        # 8.4. Логируем локально сохраненные артефакты (графики, CSV, txt)
+        tracker.log_artifact(str(gscv_path), artifact_path="plots")
+        tracker.log_artifact(str(cm_path), artifact_path="plots")
+        tracker.log_artifact(str(fi_path), artifact_path="plots")
+        tracker.log_artifact(str(fi_csv_path), artifact_path="data")
+        tracker.log_artifact(str(metrics_path), artifact_path="data")
+        
+        print(f"   - Успешно записано в MLflow! Run ID: {tracker.get_run_id()}")        
 
+    # 9. Финальное сообщение
+    print("\nОбучение GridSearchCV завершено УСПЕШНО!")
+    print(" - Чтобы увидеть результаты в браузере, запустите в терминале: mlflow ui --port 5000")
 
 if __name__ == "__main__":
     train_and_evaluate()

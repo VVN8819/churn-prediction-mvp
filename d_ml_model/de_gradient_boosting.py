@@ -5,6 +5,7 @@ d_ml_model/de_gradient_boosting.py
 """
 
 import sys
+import time
 from pathlib import Path
 
 # Настройка путей
@@ -17,7 +18,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import time
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
@@ -26,6 +26,9 @@ from sklearn.metrics import (
 
 # Импортируем наш класс подготовки данных
 from d_ml_model.db_class_data_preprocessor import DataPreprocessor
+
+# MLFLOW: Импортируем трекер
+from d_ml_model.dj_mlflow_tracker_class import get_tracker
 
 # Настройка путей
 CURRENT_DIR = Path(__file__).parent
@@ -180,7 +183,52 @@ def train_and_evaluate():
         f.write(f"Требования ко времени инференса (< 100ms): {'Требование выполнено!' if inference_requirement_met else 'Требование НЕ выполнено!'}\n")
     print(f"- Метрики сохранены: {metrics_path}")
     
+    # 8. MLFlow трекинг
+    print("\n Логирование артефактов и метрик в MLflow")
+    
+    # Получаем singleton экземпляр трекера
+    tracker = get_tracker()
+    
+    # Используем контекстный менеджер для автоматического открытия и закрытия run
+    with tracker.start_run(run_name="gradient_boosting"):
+        
+        # 8.1. Логируем гиперпараметры модели
+        tracker.log_params({
+            'n_estimators': model_gb.n_estimators,
+            'learning_rate': model_gb.learning_rate,
+            'max_depth': model_gb.max_depth,
+            'random_state': model_gb.random_state
+        })
+        
+        # 8.2. Логируем метрики (словарь float)
+        metrics = {
+            'accuracy': accuracy_score(y_test, y_pred),
+            'precision': precision_score(y_test, y_pred),
+            'recall': recall_score(y_test, y_pred),
+            'f1_score': f1_score(y_test, y_pred),
+            'roc_auc': roc_auc_score(y_test, y_pred_proba),
+            'inference_time_ms': avg_inference_time_per_client_ms
+        }
+        tracker.log_metrics(metrics)
+        
+        # 8.3. Логируем саму модель (в формате MLflow, готовом для передачи)
+        tracker.log_model(
+            model_gb, 
+            artifact_path="model", 
+            registered_model_name="churn_gradient_boosting"
+        )
+        
+        # 8.4. Логируем локально сохраненные артефакты (графики, CSV, txt)
+        tracker.log_artifact(str(cm_path), artifact_path="plots")
+        tracker.log_artifact(str(fi_path), artifact_path="plots")
+        tracker.log_artifact(str(fi_csv_path), artifact_path="data")
+        tracker.log_artifact(str(metrics_path), artifact_path="data")
+        
+        print(f"   - Успешно записано в MLflow! Run ID: {tracker.get_run_id()}")
+
+    # 9. Финальное сообщение
     print("\n Обучение Gradient Boosting завершено УСПЕШНО!")
+    print(" - Чтобы увидеть результаты в браузере, запустите в терминале: mlflow ui --port 5000")
 
 if __name__ == "__main__":
     train_and_evaluate()

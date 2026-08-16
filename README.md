@@ -211,8 +211,29 @@ X_train, y_train = data['X_train_scaled'], data['y_train']
 from e_inference.ea_preprocess_inference import InferencePreprocessor
 
 preprocessor = InferencePreprocessor()
-df_processed = preprocessor.transform(df_raw)  # Сырые данные → 26 признаков
+df_processed = preprocessor.transform(df_raw)  # Сырые данные в 26 признаков
 probabilities = model.predict_proba(df_processed)[:, 1]
+```
+5. **HypothesisTester** (`d_ml_model/di_hypothesis_test.py`)
+Класс для статистического тестирования гипотез о признаках
+```python
+from d_ml_model.di_hypothesis_test import HypothesisTester
+
+tester = HypothesisTester(skip_hypotheses=skip_hypotheses)
+tester.run_all(df_for_hypotheses)
+```
+6. **MLflowTracker** (`d_ml_model/dj_mlflow_tracker_class.py`)
+Класс для трекинга экспериментов через MLflow
+```python
+from d_ml_model.dj_mlflow_tracker_class import get_tracker
+
+tracker = MLflowTracker(experiment_name="churn_prediction")
+        
+with tracker.start_run("logistic_regression"):
+    tracker.log_params({"C": 0.1, "penalty": "l2"})
+    tracker.log_metrics({"recall": 0.95, "roc_auc": 0.85})
+    tracker.log_model(model, "model")
+    tracker.log_artifact("confusion_matrix.png")
 ```
 ## ML Pipeline
 ### Обучение 4 моделей

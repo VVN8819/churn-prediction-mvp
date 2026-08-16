@@ -1,6 +1,6 @@
 # d_ml_model/dj_mlflow_tracker_class.py
 """
-d_ml_model/dh_mlflow_tracker.py
+d_ml_model/dh_mlflow_tracker_class.py
 Класс для трекинга экспериментов через MLflow
 """
 

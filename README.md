@@ -509,7 +509,24 @@ churn-prediction-mvp/
 │   ├── eb_predict_churn.py
 │   └── predictions/        # CSV для маркетинга
 │
+├── f_delivery/
+│   ├── .env.example          # Шаблон переменных окружения
+│   ├── .gitignore            # Исключения для Git
+│   ├── fa_preprocess_inference.py # логика предобработки данных
+│   ├── fb_inference_pipeline.py # **главный скрипт** для запуска предсказаний
+│   ├── ml_config.py          # константы и пороги для ML
+│   ├── README.md
+│   ├── requirements.txt
+│   └── churn_model/          # папка с файлами модели
+│       ├── model.skops
+│       ├── scaler.joblib
+│       ├── MLmodel
+│       ├── conda.yaml
+│       ├── python_env.yaml
+│       └── requirements.txt
+│
 ├── ml_config.py            # ML-константы (для заказчика)
+├── ml_create_delivery_package.py    # автоматическая сборка пакета для прода
 ├── requirements.txt
 └── .env.example
 ```

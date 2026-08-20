@@ -373,11 +373,24 @@ def create_readme(delivery_dir):
 - `predictions/` — сюда будут сохраняться CSV-файлы с результатами.
 - `requirements.txt` — необходимые Python-библиотеки.
 
-## 🚀 Инструкция по запуску
+## Инструкция по запуску
 
 ### 1. Установка зависимостей
 ```bash
 pip install -r requirements.txt
+```
+
+### 2. Настройка подключения к БД
+```bash
+cp .env.example .env
+```
+*Заполните `.env` своими настройками*
+
+### 3. Запуск полного пайплайна (от сбора данных до предсказания)
+```bash
+python f_delivery/fb_inference_pipeline.py    # Оркестратор инференс-пайплайна для заказчика. Запускает полный цикл: Загрузка из БД - Предобработка - Предсказание - Сохранение в CSV/БД.
+```
+
 """
     with open(delivery_dir / "README.md", "w", encoding="utf-8") as f:
         f.write(readme_content)

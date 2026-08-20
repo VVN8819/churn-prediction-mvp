@@ -142,6 +142,11 @@ python d_ml_model/dg_compare_models.py                # Шаг 10: Сравне�
 python e_inference/e_run_pipeline.py                  # Шаг 11: Предсказание оттока
 ```
 
+**4. Воспроизводимость экспериментов MLFlow**
+```bash
+python ml_create_delivery_package.py                  # Шаг 12: Скрипт для автоматической сборки пакета для прода (Delivery Package)
+```
+
 ## Архитектура проекта
 ```bash
 ┌─────────────────┐      ┌──────────────┐     ┌─────────────┐

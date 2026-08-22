@@ -64,3 +64,5 @@ d_ml_model/da_pretrain_data_prep.py
 mlruns/
 mlflow.db
 # f_delivery/
+
+.history/

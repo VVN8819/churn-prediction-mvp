@@ -42,7 +42,7 @@ pip install -r requirements.txt
 
 ### 2. Настройка переменных окружения для подключения к БД
 ```bash
-cp .env.example .env
+cp f_delivery/.env.example .env
 ```
 *Заполните `.env` своими настройками*
 

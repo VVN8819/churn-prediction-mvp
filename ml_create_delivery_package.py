@@ -1242,7 +1242,7 @@ def create_env_example(delivery_dir):
     env_example_content = """
 # Конфигурация подключения к базе данных
 # Скопируйте этот файл в .env и заполните реальными значениями:
-#   cp .env.example .env
+#   cp f_delivery/.env.example .env
 #
 # ВАЖНО: Никогда не коммитьте файл .env в Git
 
@@ -1315,7 +1315,7 @@ pip install -r requirements.txt
 
 ### 2. Настройка переменных окружения для подключения к БД
 ```bash
-cp .env.example .env
+cp f_delivery/.env.example .env
 ```
 *Заполните `.env` своими настройками*
 

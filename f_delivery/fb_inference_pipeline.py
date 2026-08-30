@@ -12,6 +12,9 @@ import numpy as np
 import joblib
 from datetime import datetime
 from sqlalchemy import create_engine, text
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Локальные импорты вместо проектных
 from fa_preprocess_inference import InferencePreprocessor
@@ -30,8 +33,12 @@ def get_db_engine():
     host = os.getenv("DB_HOST", "localhost")
     port = os.getenv("DB_PORT", "5432")
     database = os.getenv("DB_NAME", "your_db_name")
+    sslmode = os.getenv("DB_SSLMODE", "require")
     
-    connection_string = f"postgresql://{user}:{password}@{host}:{port}/{database}"
+    if not all([user, password, host, database]):
+        raise ValueError("Не все переменные окружения БД установлены. Проверьте .env")
+    
+    connection_string = f"postgresql://{user}:{password}@{host}:{port}/{database}?sslmode={sslmode}"
     return create_engine(connection_string)
     
 def get_risk_level(probability: float) -> str:

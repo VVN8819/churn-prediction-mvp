@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Сервис 1: Инициализация БД (запускается 1 раз)
+  bootstrap:
+    build: .
+    container_name: churn_bootstrap
+    env_file:
+      - .env
+    command: fc_bootstrap_database.py
+    volumes:
+      - ./predictions:/app/predictions
+    restart: "no"  # Запускается один раз и останавливается
+
+  # Сервис 2: Первичная загрузка из CDP (1 раз)
+  sync-cdp:
+    build: .
+    container_name: churn_sync_cdp
+    env_file:
+      - .env
+    command: fd_sync_cdp_data.py
+    volumes:
+      - ./predictions:/app/predictions
+    restart: "no"
+    depends_on:
+      - bootstrap
+
+  # Сервис 3: Обновление признаков (ежедневно)
+  refresh-features:
+    build: .
+    container_name: churn_refresh_features
+    env_file:
+      - .env
+    command: fe_refresh_features.py
+    volumes:
+      - ./predictions:/app/predictions
+    restart: "no"
+
+  # Сервис 4: Инференс (ежедневно, основной)
+  inference:
+    build: .
+    container_name: churn_inference
+    env_file:
+      - .env
+    command: fb_inference_pipeline.py
+    volumes:
+      - ./predictions:/app/predictions
+    restart: "no"
+    depends_on:
+      - refresh-features
+
+  # Сервис 5: Полный пайплайн (для удобства)
+  full-pipeline:
+    build: .
+    container_name: churn_full_pipeline
+    env_file:
+      - .env
+    command: >
+      sh -c "
+        python fc_bootstrap_database.py &&
+        python fd_sync_cdp_data.py &&
+        python fe_refresh_features.py &&
+        python fb_inference_pipeline.py
+      "
+    volumes:
+      - ./predictions:/app/predictions
+    restart: "no"

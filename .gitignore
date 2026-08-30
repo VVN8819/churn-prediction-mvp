@@ -66,3 +66,6 @@ mlflow.db
 # f_delivery/
 
 .history/
+
+# Результаты предсказаний (могут содержать бизнес-данные)
+predictions/

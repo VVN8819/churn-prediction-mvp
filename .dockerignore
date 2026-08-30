@@ -1,0 +1,74 @@
+# Что НЕ включать в Docker-образ
+
+# Исходный код проекта (не нужен в production)
+a_data_collection/
+b_eda/
+c_features/
+d_ml_model/
+e_inference/
+
+# MLflow артефакты
+mlruns/
+mlflow.db
+
+# Данные
+*.csv
+*.xlsx
+*.json
+*.parquet
+c_eda/data/
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Секреты
+.env
+.env.local
+*.pem
+*.key
+
+# Python кэш
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.eggs/
+
+# Виртуальные окружения
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS файлы
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Git
+.git/
+.gitignore
+
+# Документация (не нужна в production)
+README.md
+LICENSE
+SECURITY.md
+
+# Тесты
+tests/
+test_*.py
+*_test.py
+
+# Временные файлы
+*.tmp
+*.log
